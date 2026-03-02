@@ -1,0 +1,39 @@
+billing_system
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.i
+*.ii
+*.s
+*.d
+
+# Build directories
+build/
+bin/
+obj/
+out/
+dist/
+
+# CMake / Autotools / Make intermediates
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+Makefile.in
+aclocal.m4
+autom4te.cache/
+m4/
+
+# IDE folders
+.idea/
+.vscode/
+.vs/
