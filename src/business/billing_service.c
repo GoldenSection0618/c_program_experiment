@@ -1,9 +1,53 @@
 #include "business.h"
 #include "data.h"
 
-static int readLine(const char *prompt, char *buffer, size_t size)
+static void discardRemainingInputLine(void)
+{
+    int ch = 0;
+
+    do {
+        ch = getchar();
+    } while (ch != '\n' && ch != EOF);
+}
+
+static void trimInPlace(char *text)
 {
     size_t len = 0;
+    size_t start = 0;
+    size_t end = 0;
+
+    if (text == NULL) {
+        return;
+    }
+
+    len = strlen(text);
+    if (len == 0) {
+        return;
+    }
+
+    while (start < len && isspace((unsigned char)text[start])) {
+        start++;
+    }
+
+    if (start == len) {
+        text[0] = '\0';
+        return;
+    }
+
+    end = len;
+    while (end > start && isspace((unsigned char)text[end - 1])) {
+        end--;
+    }
+
+    if (start > 0) {
+        memmove(text, text + start, end - start);
+    }
+    text[end - start] = '\0';
+}
+
+static int readLine(const char *prompt, char *buffer, size_t size)
+{
+    char *newLine = NULL;
 
     if (buffer == NULL || size == 0) {
         return -1;
@@ -14,10 +58,12 @@ static int readLine(const char *prompt, char *buffer, size_t size)
         return -1;
     }
 
-    len = strlen(buffer);
-    if (len > 0 && buffer[len - 1] == '\n') {
-        buffer[len - 1] = '\0';
+    newLine = strchr(buffer, '\n');
+    if (newLine == NULL) {
+        discardRemainingInputLine();
+        return -1;
     }
+    *newLine = '\0';
 
     return 0;
 }
@@ -155,7 +201,12 @@ void bizAddCard(void)
     time_t now = 0;
     int ret = DATA_OK;
 
-    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("卡号输入不合法，应为1~18位且不能为空。\n");
+        return;
+    }
+    trimInPlace(cardName);
+    if (!isValidCardName(cardName)) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
         return;
     }
@@ -165,7 +216,12 @@ void bizAddCard(void)
         return;
     }
 
-    if (readLine("请输入密码（1~8位）：", password, sizeof(password)) != 0 || !isValidPassword(password)) {
+    if (readLine("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("密码输入不合法，应为1~8位且不能为空。\n");
+        return;
+    }
+    trimInPlace(password);
+    if (!isValidPassword(password)) {
         printf("密码输入不合法，应为1~8位且不能为空。\n");
         return;
     }
@@ -209,7 +265,12 @@ void bizQueryCard(void)
     char cardName[INPUT_BUF_SIZE];
     const Card *card = NULL;
 
-    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("卡号输入不合法，应为1~18位且不能为空。\n");
+        return;
+    }
+    trimInPlace(cardName);
+    if (!isValidCardName(cardName)) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
         return;
     }

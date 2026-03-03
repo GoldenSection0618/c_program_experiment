@@ -1,5 +1,14 @@
 #include "menu.h"
 
+static void discardRemainingInputLine(void)
+{
+    int ch = 0;
+
+    do {
+        ch = getchar();
+    } while (ch != '\n' && ch != EOF);
+}
+
 void outputMenu(void)
 {
     printf("%s\n", STUDENT_INFO);
@@ -19,6 +28,7 @@ int readMenuChoice(int *choice)
 {
     char buffer[INPUT_BUF_SIZE];
     char *endptr = NULL;
+    char *newLine = NULL;
     long value = 0;
 
     if (choice == NULL) {
@@ -29,6 +39,13 @@ int readMenuChoice(int *choice)
     if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
         return -1;
     }
+
+    newLine = strchr(buffer, '\n');
+    if (newLine == NULL) {
+        discardRemainingInputLine();
+        return -1;
+    }
+    *newLine = '\0';
 
     errno = 0;
     value = strtol(buffer, &endptr, 10);
