@@ -1,15 +1,226 @@
 #include "business.h"
 #include "data.h"
 
+static int readLine(const char *prompt, char *buffer, size_t size)
+{
+    size_t len = 0;
+
+    if (buffer == NULL || size == 0) {
+        return -1;
+    }
+
+    printf("%s", prompt);
+    if (fgets(buffer, (int)size, stdin) == NULL) {
+        return -1;
+    }
+
+    len = strlen(buffer);
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+    }
+
+    return 0;
+}
+
+static int isValidCardName(const char *cardName)
+{
+    size_t len = 0;
+
+    if (cardName == NULL) {
+        return 0;
+    }
+
+    len = strlen(cardName);
+    return len > 0 && len <= CARD_NAME_MAX_LEN;
+}
+
+static int isValidPassword(const char *password)
+{
+    size_t len = 0;
+
+    if (password == NULL) {
+        return 0;
+    }
+
+    len = strlen(password);
+    return len > 0 && len <= CARD_PWD_MAX_LEN;
+}
+
+static int readAmount(const char *prompt, float *amount)
+{
+    char buf[INPUT_BUF_SIZE];
+    char *endptr = NULL;
+    float value = 0.0f;
+
+    if (amount == NULL) {
+        return -1;
+    }
+
+    if (readLine(prompt, buf, sizeof(buf)) != 0) {
+        return -1;
+    }
+
+    errno = 0;
+    value = strtof(buf, &endptr);
+    if (endptr == buf || errno == ERANGE) {
+        return -1;
+    }
+
+    while (*endptr != '\0' && isspace((unsigned char)*endptr)) {
+        endptr++;
+    }
+
+    if (*endptr != '\0' || value < 0.0f) {
+        return -1;
+    }
+
+    *amount = value;
+    return 0;
+}
+
+static const char *cardStatusToText(int status)
+{
+    switch (status) {
+    case CARD_STATUS_OFFLINE:
+        return "未上机";
+    case CARD_STATUS_ONLINE:
+        return "正在上机";
+    case CARD_STATUS_CANCELED:
+        return "已注销";
+    case CARD_STATUS_INVALID:
+        return "失效";
+    default:
+        return "未知";
+    }
+}
+
+static void formatTimeString(time_t ts, char *buffer, size_t size)
+{
+    struct tm *local = NULL;
+
+    if (buffer == NULL || size == 0) {
+        return;
+    }
+
+    if (ts == 0) {
+        snprintf(buffer, size, "-");
+        return;
+    }
+
+    local = localtime(&ts);
+    if (local == NULL) {
+        snprintf(buffer, size, "-");
+        return;
+    }
+
+    if (strftime(buffer, size, "%Y-%m-%d %H:%M:%S", local) == 0) {
+        snprintf(buffer, size, "-");
+    }
+}
+
+static void showCardSummary(const Card *card)
+{
+    if (card == NULL) {
+        return;
+    }
+
+    printf("卡号\t密码\t状态\t余额\n");
+    printf("%s\t%s\t%s\t%.2f\n", card->aCardName, card->aPwd, cardStatusToText(card->nStatus), card->fBalance);
+}
+
+static void showQueryCardDetails(const Card *card)
+{
+    char lastUseBuf[32];
+
+    if (card == NULL) {
+        return;
+    }
+
+    formatTimeString(card->tLast, lastUseBuf, sizeof(lastUseBuf));
+    printf("查询结果：\n");
+    printf("卡号：%s\n", card->aCardName);
+    printf("卡状态：%s\n", cardStatusToText(card->nStatus));
+    printf("余额：%.2f\n", card->fBalance);
+    printf("累计使用金额：%.2f\n", card->fTotalUse);
+    printf("使用次数：%d\n", card->nUseCount);
+    printf("最后使用时间：%s\n", lastUseBuf);
+}
+
 void bizAddCard(void)
 {
-    printf("[业务逻辑层] 添加卡功能入口。\n");
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    float amount = 0.0f;
+    Card card;
+    time_t now = 0;
+    int ret = DATA_OK;
+
+    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+        printf("卡号输入不合法，应为1~18位且不能为空。\n");
+        return;
+    }
+
+    if (dataFindCardByName(cardName) != NULL) {
+        printf("卡号已存在，不能重复添加！\n");
+        return;
+    }
+
+    if (readLine("请输入密码（1~8位）：", password, sizeof(password)) != 0 || !isValidPassword(password)) {
+        printf("密码输入不合法，应为1~8位且不能为空。\n");
+        return;
+    }
+
+    if (readAmount("请输入开卡金额（元）：", &amount) != 0) {
+        printf("开卡金额输入不合法，应为非负数字。\n");
+        return;
+    }
+
+    memset(&card, 0, sizeof(card));
+    snprintf(card.aCardName, sizeof(card.aCardName), "%s", cardName);
+    snprintf(card.aPwd, sizeof(card.aPwd), "%s", password);
+    card.nStatus = CARD_STATUS_OFFLINE;
+    now = time(NULL);
+    card.tStart = now;
+    card.tEnd = now + (time_t)(365 * 24 * 60 * 60);
+    card.tLast = now;
+    card.fTotalUse = 0.0f;
+    card.nUseCount = 0;
+    card.fBalance = amount;
+    card.nDel = 0;
+
+    ret = dataAddCard(&card);
+    if (ret == DATA_ERR_FULL) {
+        printf("卡库已满，无法继续新增。\n");
+        return;
+    }
+
+    if (ret != DATA_OK) {
+        printf("添加卡失败。\n");
+        return;
+    }
+
+    printf("添加卡成功！\n");
+    showCardSummary(&card);
     dataLogOperation("添加卡");
 }
 
 void bizQueryCard(void)
 {
-    printf("[业务逻辑层] 查询卡功能入口。\n");
+    char cardName[INPUT_BUF_SIZE];
+    const Card *card = NULL;
+
+    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+        printf("卡号输入不合法，应为1~18位且不能为空。\n");
+        return;
+    }
+
+    card = dataFindCardByName(cardName);
+    if (card == NULL) {
+        printf("没有该卡的信息！\n");
+        return;
+    }
+
+    showQueryCardDetails(card);
     dataLogOperation("查询卡");
 }
 
