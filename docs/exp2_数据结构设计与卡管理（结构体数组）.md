@@ -5,7 +5,7 @@
 2. 在实验一框架基础上，使用结构体数组实现卡管理的“新增卡、查询卡”。
 
 ## 2. 数据结构设计
-本实验在 [model.h](/home/user/c_program_experiment/include/model.h:1) 中定义以下类型：
+本实验在 [model.h](../include/model.h) 中定义以下类型：
 
 1. `Card`：卡信息（卡号、密码、状态、开卡时间、截止时间、累计使用、最后使用、次数、余额、删除标识）
 2. `Billing`：消费记录
@@ -26,27 +26,27 @@
 - `Card g_cards[MAX_CARD_COUNT]`
 - `size_t g_card_count`
 
-数据层接口见 [data.h](/home/user/c_program_experiment/include/data.h:1)：
+数据层接口见 [data.h](../include/data.h)：
 - `dataAddCard`
 - `dataFindCardByName`
 - `dataGetCardCount`
 - `dataGetCardByIndex`
 
-实现见 [repository.c](/home/user/c_program_experiment/src/data/repository.c:1)。
+实现见 [repository.c](../src/data/repository.c)。
 
 ## 4. 已实现功能（实验二重点）
 ### 4.1 菜单 1：新增卡
-实现位置：[billing_service.c](/home/user/c_program_experiment/src/business/billing_service.c:147)
+实现位置：[billing_service.c](../src/business/billing_service.c)
 
 已覆盖：
-1. 输入卡号（1~18位）/密码（1~8位）/开卡金额；
+1. 输入卡号（1\~18位）/密码（1\~8位）/开卡金额；
 2. 卡号重复校验；
 3. 密码长度校验（含超长拦截）；
 4. 新卡字段初始化（状态、时间、余额、次数、累计金额、删除标识）；
 5. 成功后列表化显示（卡号/密码/状态/余额）。
 
 ### 4.2 菜单 2：查询卡
-实现位置：[billing_service.c](/home/user/c_program_experiment/src/business/billing_service.c:207)
+实现位置：[billing_service.c](../src/business/billing_service.c)
 
 已覆盖：
 1. 按卡号查找；
