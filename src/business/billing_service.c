@@ -1,4 +1,5 @@
 #include "business.h"
+#include "card_view.h"
 #include "data.h"
 
 static void discardRemainingInputLine(void)
@@ -124,74 +125,6 @@ static int readAmount(const char *prompt, float *amount)
     return 0;
 }
 
-static const char *cardStatusToText(int status)
-{
-    switch (status) {
-    case CARD_STATUS_OFFLINE:
-        return "未上机";
-    case CARD_STATUS_ONLINE:
-        return "正在上机";
-    case CARD_STATUS_CANCELED:
-        return "已注销";
-    case CARD_STATUS_INVALID:
-        return "失效";
-    default:
-        return "未知";
-    }
-}
-
-static void formatTimeString(time_t ts, char *buffer, size_t size)
-{
-    struct tm *local = NULL;
-
-    if (buffer == NULL || size == 0) {
-        return;
-    }
-
-    if (ts == 0) {
-        snprintf(buffer, size, "-");
-        return;
-    }
-
-    local = localtime(&ts);
-    if (local == NULL) {
-        snprintf(buffer, size, "-");
-        return;
-    }
-
-    if (strftime(buffer, size, "%Y-%m-%d %H:%M:%S", local) == 0) {
-        snprintf(buffer, size, "-");
-    }
-}
-
-static void showCardSummary(const Card *card)
-{
-    if (card == NULL) {
-        return;
-    }
-
-    printf("卡号\t密码\t状态\t余额\n");
-    printf("%s\t%s\t%s\t%.2f\n", card->aCardName, card->aPwd, cardStatusToText(card->nStatus), card->fBalance);
-}
-
-static void showQueryCardDetails(const Card *card)
-{
-    char lastUseBuf[32];
-
-    if (card == NULL) {
-        return;
-    }
-
-    formatTimeString(card->tLast, lastUseBuf, sizeof(lastUseBuf));
-    printf("查询结果：\n");
-    printf("卡号：%s\n", card->aCardName);
-    printf("卡状态：%s\n", cardStatusToText(card->nStatus));
-    printf("余额：%.2f\n", card->fBalance);
-    printf("累计使用金额：%.2f\n", card->fTotalUse);
-    printf("使用次数：%d\n", card->nUseCount);
-    printf("最后使用时间：%s\n", lastUseBuf);
-}
-
 void bizAddCard(void)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -256,7 +189,7 @@ void bizAddCard(void)
     }
 
     printf("添加卡成功！\n");
-    showCardSummary(&card);
+    viewShowCardSummary(&card);
     dataLogOperation("添加卡");
 }
 
@@ -281,7 +214,7 @@ void bizQueryCard(void)
         return;
     }
 
-    showQueryCardDetails(card);
+    viewShowQueryCardDetails(card);
     dataLogOperation("查询卡");
 }
 
