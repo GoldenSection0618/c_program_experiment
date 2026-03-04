@@ -1,0 +1,10 @@
+# exp2 acceptance suites
+menu
+menu_add_valid
+menu_add_duplicate
+menu_add_password_too_long
+menu_add_card_empty
+menu_add_card_too_long
+menu_add_amount_invalid
+menu_query_existing_and_missing
+menu_invalid_menu_inputs

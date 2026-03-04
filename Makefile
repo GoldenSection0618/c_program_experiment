@@ -21,20 +21,10 @@ TEST_DIR ?= tests/$(LAB)
 TEST_INPUT ?= $(TEST_DIR)/$(TEST_SUITE).input
 TEST_EXPECT ?= $(TEST_DIR)/$(TEST_SUITE).expect.tsv
 TEST_RUNNER ?= scripts/run_smoke_test.sh
-EXP2_TEST_DIR := tests/exp2
-TEST_SUITES_EXP2_ACCEPTANCE := \
-	menu \
-	menu_add_valid \
-	menu_add_duplicate \
-	menu_add_password_too_long \
-	menu_add_card_empty \
-	menu_add_card_too_long \
-	menu_add_amount_invalid \
-	menu_query_existing_and_missing \
-	menu_invalid_menu_inputs
-TEST_SUITES_EXP2_REGRESSION := \
-	menu_regression_long_input \
-	menu_regression_whitespace
+TEST_BATCH_RUNNER ?= scripts/run_test_batch.sh
+TEST_GROUP ?= acceptance
+TEST_SUITES_FILE ?= $(TEST_DIR)/suites.$(TEST_GROUP)
+TEST_OUTPUT_DIR ?= $(BUILD_DIR)
 
 SRC := $(shell find $(SRC_DIR) -type f -name '*.c' | sort)
 OBJ := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
@@ -55,7 +45,7 @@ CFLAGS := $(CFLAGS_BASE) $(CFLAGS_MODE)
 
 FRONTEND_PM := $(shell if command -v pnpm >/dev/null 2>&1; then echo pnpm; elif command -v npm >/dev/null 2>&1; then echo npm; elif command -v yarn >/dev/null 2>&1; then echo yarn; fi)
 
-.PHONY: all build debug release run test test-exp2-acceptance test-exp2-regression clean distclean rebuild FORCE \
+.PHONY: all build debug release run test test-batch clean distclean rebuild FORCE \
 	frontend-install frontend-build frontend-dev help
 
 all: build
@@ -74,17 +64,8 @@ run: build
 test: build
 	@bash "$(TEST_RUNNER)" "$(BIN)" "$(TEST_INPUT)" "$(TEST_EXPECT)" "$(TEST_OUTPUT)"
 
-test-exp2-acceptance: build
-	@for suite in $(TEST_SUITES_EXP2_ACCEPTANCE); do \
-		echo "[test] suite=$$suite"; \
-		bash "$(TEST_RUNNER)" "$(BIN)" "$(EXP2_TEST_DIR)/$$suite.input" "$(EXP2_TEST_DIR)/$$suite.expect.tsv" "$(BUILD_DIR)/test_output_$$suite.txt"; \
-	done
-
-test-exp2-regression: build
-	@for suite in $(TEST_SUITES_EXP2_REGRESSION); do \
-		echo "[test] suite=$$suite"; \
-		bash "$(TEST_RUNNER)" "$(BIN)" "$(EXP2_TEST_DIR)/$$suite.input" "$(EXP2_TEST_DIR)/$$suite.expect.tsv" "$(BUILD_DIR)/test_output_$$suite.txt"; \
-	done
+test-batch: build
+	@bash "$(TEST_BATCH_RUNNER)" "$(BIN)" "$(TEST_DIR)" "$(TEST_SUITES_FILE)" "$(TEST_OUTPUT_DIR)" "$(TEST_RUNNER)"
 
 rebuild: clean build
 
@@ -162,8 +143,7 @@ help:
 	@echo "  make release                      Build with release flags"
 	@echo "  make run                          Build and run binary"
 	@echo "  make test                         Run test suite from files via $(TEST_RUNNER)"
-	@echo "  make test-exp2-acceptance         Run exp2 acceptance suites"
-	@echo "  make test-exp2-regression         Run exp2 regression suites"
+	@echo "  make test-batch                   Run suites listed in TEST_SUITES_FILE"
 	@echo "  make clean                        Remove $(BUILD_DIR)"
 	@echo "  make distclean                    clean + remove frontend node_modules"
 	@echo "  make frontend-install             Install frontend dependencies"
@@ -172,6 +152,7 @@ help:
 	@echo "Variables:"
 	@echo "  TARGET=$(TARGET) BUILD_DIR=$(BUILD_DIR) FRONTEND_DIR=$(FRONTEND_DIR)"
 	@echo "  MODE=$(MODE) LAB=$(LAB) TEST_SUITE=$(TEST_SUITE)"
+	@echo "  TEST_GROUP=$(TEST_GROUP) TEST_SUITES_FILE=$(TEST_SUITES_FILE)"
 	@echo "  TEST_INPUT=$(TEST_INPUT)"
 	@echo "  TEST_EXPECT=$(TEST_EXPECT)"
 

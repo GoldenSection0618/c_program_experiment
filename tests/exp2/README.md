@@ -17,6 +17,11 @@
 
 ## 3. 运行方式
 ```bash
-make test-exp2-acceptance
-make test-exp2-regression
+make test-batch LAB=exp2 TEST_GROUP=acceptance
+make test-batch LAB=exp2 TEST_GROUP=regression
+```
+
+也可手动指定清单文件：
+```bash
+make test-batch LAB=exp2 TEST_SUITES_FILE=tests/exp2/suites.acceptance
 ```
