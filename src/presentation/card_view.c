@@ -112,6 +112,30 @@ static void printCellRule(int width)
     }
 }
 
+static void formatMoneyFromCent(int32_t amountCent, char *buffer, size_t size)
+{
+    int32_t absCent = amountCent;
+    int32_t yuan = 0;
+    int32_t cent = 0;
+
+    if (buffer == NULL || size == 0) {
+        return;
+    }
+
+    if (amountCent < 0) {
+        absCent = -amountCent;
+    }
+
+    yuan = absCent / 100;
+    cent = absCent % 100;
+
+    if (amountCent < 0) {
+        snprintf(buffer, size, "-%d.%02d", yuan, cent);
+    } else {
+        snprintf(buffer, size, "%d.%02d", yuan, cent);
+    }
+}
+
 void viewShowCardSummary(const Card *card)
 {
     const int cardColWidth = 18;
@@ -124,7 +148,7 @@ void viewShowCardSummary(const Card *card)
         return;
     }
 
-    snprintf(balanceBuf, sizeof(balanceBuf), "%.2f", card->fBalance);
+    formatMoneyFromCent(card->nBalanceCent, balanceBuf, sizeof(balanceBuf));
 
     printCellRule(cardColWidth + 2);
     printCellRule(pwdColWidth + 2);
@@ -183,8 +207,8 @@ void viewShowQueryCardDetails(const Card *card)
     }
 
     formatTimeString(card->tLast, lastUseBuf, sizeof(lastUseBuf));
-    snprintf(balanceBuf, sizeof(balanceBuf), "%.2f", card->fBalance);
-    snprintf(totalUseBuf, sizeof(totalUseBuf), "%.2f", card->fTotalUse);
+    formatMoneyFromCent(card->nBalanceCent, balanceBuf, sizeof(balanceBuf));
+    formatMoneyFromCent(card->nTotalUseCent, totalUseBuf, sizeof(totalUseBuf));
     snprintf(useCountBuf, sizeof(useCountBuf), "%d", card->nUseCount);
 
     printf("查询结果：\n");

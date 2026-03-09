@@ -93,43 +93,84 @@ static int isValidPassword(const char *password)
     return len > 0 && len <= CARD_PWD_MAX_LEN;
 }
 
-static int readAmount(const char *prompt, float *amount)
+static int parseMoneyToCent(const char *text, int32_t *amountCent)
+{
+    const char *p = text;
+    int64_t yuan = 0;
+    int32_t frac = 0;
+    int fracDigits = 0;
+    int64_t totalCent = 0;
+
+    if (text == NULL || amountCent == NULL) {
+        return -1;
+    }
+
+    if (*p == '\0') {
+        return -1;
+    }
+
+    while (*p >= '0' && *p <= '9') {
+        yuan = yuan * 10 + (int64_t)(*p - '0');
+        if (yuan > (INT32_MAX / 100)) {
+            return -1;
+        }
+        p++;
+    }
+
+    if (p == text) {
+        return -1;
+    }
+
+    if (*p == '.') {
+        p++;
+        while (*p >= '0' && *p <= '9') {
+            if (fracDigits >= 2) {
+                return -1;
+            }
+            frac = (int32_t)(frac * 10 + (*p - '0'));
+            fracDigits++;
+            p++;
+        }
+    }
+
+    if (*p != '\0') {
+        return -1;
+    }
+
+    if (fracDigits == 1) {
+        frac *= 10;
+    }
+
+    totalCent = yuan * 100 + frac;
+    if (totalCent < 0 || totalCent > INT32_MAX) {
+        return -1;
+    }
+
+    *amountCent = (int32_t)totalCent;
+    return 0;
+}
+
+static int readAmountCent(const char *prompt, int32_t *amountCent)
 {
     char buf[INPUT_BUF_SIZE];
-    char *endptr = NULL;
-    float value = 0.0f;
 
-    if (amount == NULL) {
+    if (amountCent == NULL) {
         return -1;
     }
 
     if (readLine(prompt, buf, sizeof(buf)) != 0) {
         return -1;
     }
+    trimInPlace(buf);
 
-    errno = 0;
-    value = strtof(buf, &endptr);
-    if (endptr == buf || errno == ERANGE) {
-        return -1;
-    }
-
-    while (*endptr != '\0' && isspace((unsigned char)*endptr)) {
-        endptr++;
-    }
-
-    if (*endptr != '\0' || value < 0.0f) {
-        return -1;
-    }
-
-    *amount = value;
-    return 0;
+    return parseMoneyToCent(buf, amountCent);
 }
 
 void bizAddCard(void)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
-    float amount = 0.0f;
+    int32_t amountCent = 0;
     Card card;
     time_t now = 0;
     int ret = DATA_OK;
@@ -159,8 +200,12 @@ void bizAddCard(void)
         return;
     }
 
-    if (readAmount("请输入开卡金额（元）：", &amount) != 0) {
+    if (readAmountCent("请输入开卡金额（元）：", &amountCent) != 0) {
         printf("开卡金额输入不合法，应为非负数字。\n");
+        return;
+    }
+    if (amountCent >= MAX_BALANCE_CENT) {
+        printf("余额过大，卡内余额必须小于1000000元。\n");
         return;
     }
 
@@ -172,9 +217,9 @@ void bizAddCard(void)
     card.tStart = now;
     card.tEnd = now + (time_t)(365 * 24 * 60 * 60);
     card.tLast = now;
-    card.fTotalUse = 0.0f;
+    card.nTotalUseCent = 0;
     card.nUseCount = 0;
-    card.fBalance = amount;
+    card.nBalanceCent = amountCent;
     card.nDel = 0;
 
     ret = dataAddCard(&card);

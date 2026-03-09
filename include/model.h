@@ -1,11 +1,13 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <stdint.h>
 #include <time.h>
 
 #define CARD_NAME_MAX_LEN 18
 #define CARD_PWD_MAX_LEN 8
 #define MAX_CARD_COUNT 1024
+#define MAX_BALANCE_CENT 100000000 /* 1000000.00 元，业务规则要求余额必须小于该值 */
 
 typedef enum CardStatus {
     CARD_STATUS_OFFLINE = 0,
@@ -20,10 +22,10 @@ typedef struct Card {
     int nStatus;
     time_t tStart;
     time_t tEnd;
-    float fTotalUse;
+    int32_t nTotalUseCent;
     time_t tLast;
     int nUseCount;
-    float fBalance;
+    int32_t nBalanceCent;
     int nDel;
 } Card;
 
@@ -31,7 +33,7 @@ typedef struct Billing {
     char aCardName[CARD_NAME_MAX_LEN + 1];
     time_t tStart;
     time_t tEnd;
-    float fAmount;
+    int32_t nAmountCent;
     int nStatus;
     int nDel;
 } Billing;
@@ -40,22 +42,22 @@ typedef struct LogonInfo {
     char aCardName[CARD_NAME_MAX_LEN + 1];
     time_t tStart;
     int nStatus;
-    float fBalance;
+    int32_t nBalanceCent;
 } LogonInfo;
 
 typedef struct SettleInfo {
     char aCardName[CARD_NAME_MAX_LEN + 1];
     time_t tStart;
     time_t tEnd;
-    float fAmount;
-    float fBalance;
+    int32_t nAmountCent;
+    int32_t nBalanceCent;
 } SettleInfo;
 
 typedef struct Money {
     char aCardName[CARD_NAME_MAX_LEN + 1];
     time_t tTime;
     int nStatus;
-    float fMoney;
+    int32_t nMoneyCent;
     int nDel;
 } Money;
 
@@ -63,7 +65,7 @@ typedef struct Rate {
     int starttime;
     int endtime;
     int unit;
-    float charge;
+    int32_t nChargeCent;
     int ratetype;
     int del;
 } Rate;
