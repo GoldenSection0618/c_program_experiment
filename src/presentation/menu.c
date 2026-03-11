@@ -1,4 +1,12 @@
 #include "menu.h"
+#include "common.h"
+
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static void discardRemainingInputLine(void)
 {

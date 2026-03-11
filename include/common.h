@@ -1,13 +1,6 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #define SYSTEM_NAME "计费管理系统"
 #define STUDENT_INFO "37-1023007337-杨立晗-软件2301"
 

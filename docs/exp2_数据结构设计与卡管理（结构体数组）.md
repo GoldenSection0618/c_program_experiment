@@ -24,13 +24,10 @@
 数据存储层使用内存链表：
 
 - `CardNode *g_pCardListHead`
-- `size_t g_cardCount`
 
 数据层接口见 [data.h](../include/data.h)：
 - `dataAddCard`
 - `dataFindCardByName`
-- `dataGetCardCount`
-- `dataGetCardByIndex`
 - `dataCleanup`
 
 实现见 [repository.c](../src/data/repository.c)。

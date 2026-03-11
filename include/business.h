@@ -1,10 +1,10 @@
 #ifndef BUSINESS_H
 #define BUSINESS_H
 
-#include "common.h"
+#include "model.h"
 
-void bizAddCard(void);
-void bizQueryCard(void);
+int bizAddCard(Card *createdCard);
+int bizQueryCard(Card *queriedCard);
 void bizStartBilling(void);
 void bizStopBilling(void);
 void bizRecharge(void);

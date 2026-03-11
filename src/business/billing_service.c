@@ -1,6 +1,12 @@
 #include "business.h"
-#include "card_view.h"
+#include "common.h"
 #include "data.h"
+#include "operation_log.h"
+
+#include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
 
 static void discardRemainingInputLine(void)
 {
@@ -166,7 +172,7 @@ static int readAmountCent(const char *prompt, int32_t *amountCent)
     return parseMoneyToCent(buf, amountCent);
 }
 
-void bizAddCard(void)
+int bizAddCard(Card *createdCard)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
@@ -177,36 +183,36 @@ void bizAddCard(void)
 
     if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return;
+        return -1;
     }
     trimInPlace(cardName);
     if (!isValidCardName(cardName)) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return;
+        return -1;
     }
 
     if (dataFindCardByName(cardName) != NULL) {
         printf("卡号已存在，不能重复添加！\n");
-        return;
+        return -1;
     }
 
     if (readLine("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
         printf("密码输入不合法，应为1~8位且不能为空。\n");
-        return;
+        return -1;
     }
     trimInPlace(password);
     if (!isValidPassword(password)) {
         printf("密码输入不合法，应为1~8位且不能为空。\n");
-        return;
+        return -1;
     }
 
     if (readAmountCent("请输入开卡金额（元）：", &amountCent) != 0) {
         printf("开卡金额输入不合法，应为非负数字。\n");
-        return;
+        return -1;
     }
     if (amountCent >= MAX_BALANCE_CENT) {
         printf("余额过大，卡内余额必须小于1000000元。\n");
-        return;
+        return -1;
     }
 
     memset(&card, 0, sizeof(card));
@@ -225,78 +231,83 @@ void bizAddCard(void)
     ret = dataAddCard(&card);
     if (ret == DATA_ERR_NO_MEMORY) {
         printf("系统内存不足，无法继续新增。\n");
-        return;
+        return -1;
     }
 
     if (ret != DATA_OK) {
         printf("添加卡失败。\n");
-        return;
+        return -1;
     }
 
-    printf("添加卡成功！\n");
-    viewShowCardSummary(&card);
-    dataLogOperation("添加卡");
+    logOperation("添加卡");
+    if (createdCard != NULL) {
+        *createdCard = card;
+    }
+    return 0;
 }
 
-void bizQueryCard(void)
+int bizQueryCard(Card *queriedCard)
 {
     char cardName[INPUT_BUF_SIZE];
     const Card *card = NULL;
 
     if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return;
+        return -1;
     }
     trimInPlace(cardName);
     if (!isValidCardName(cardName)) {
         printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return;
+        return -1;
     }
 
     card = dataFindCardByName(cardName);
     if (card == NULL) {
         printf("没有该卡的信息！\n");
-        return;
+        return -1;
     }
 
-    viewShowQueryCardDetails(card);
-    dataLogOperation("查询卡");
+    logOperation("查询卡");
+    if (queriedCard != NULL) {
+        *queriedCard = *card;
+    }
+    return 0;
 }
 
 void bizStartBilling(void)
 {
     printf("[业务逻辑层] 上机计费功能入口。\n");
-    dataLogOperation("上机");
+    logOperation("上机");
 }
 
 void bizStopBilling(void)
 {
     printf("[业务逻辑层] 下机计费功能入口。\n");
-    dataLogOperation("下机");
+    logOperation("下机");
 }
 
 void bizRecharge(void)
 {
     printf("[业务逻辑层] 充值功能入口。\n");
-    dataLogOperation("充值");
+    logOperation("充值");
 }
 
 void bizRefund(void)
 {
     printf("[业务逻辑层] 退费功能入口。\n");
-    dataLogOperation("退费");
+    logOperation("退费");
 }
 
 void bizStatistics(void)
 {
     printf("[业务逻辑层] 查询统计功能入口。\n");
-    dataLogOperation("查询统计");
+    logOperation("查询统计");
 }
 
 void bizCancelCard(void)
 {
     printf("[业务逻辑层] 注销卡功能入口。\n");
-    dataLogOperation("注销卡");
+    logOperation("注销卡");
 }
 
 void bizShutdown(void)

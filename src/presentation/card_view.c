@@ -1,5 +1,9 @@
 #include "card_view.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+
 static const char *cardStatusToText(int status)
 {
     switch (status) {

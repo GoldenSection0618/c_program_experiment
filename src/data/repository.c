@@ -1,6 +1,9 @@
 #include "data.h"
 #include "card_storage.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 static CardNode *g_pCardListHead = NULL;
 static size_t g_cardCount = 0;
 
@@ -28,31 +31,6 @@ static CardNode *findCardNodeByName(const char *cardName)
     }
 
     return NULL;
-}
-
-static CardNode *findCardNodeByIndex(size_t index)
-{
-    CardNode *pCurrent = g_pCardListHead;
-    size_t currentIndex = 0;
-
-    while (pCurrent != NULL) {
-        if (currentIndex == index) {
-            return pCurrent;
-        }
-        currentIndex++;
-        pCurrent = pCurrent->pNext;
-    }
-
-    return NULL;
-}
-
-void dataLogOperation(const char *operation)
-{
-#if ENABLE_LOG
-    printf("[数据存储层] 操作记录：%s\n", operation);
-#else
-    (void)operation;
-#endif
 }
 
 const Card *dataFindCardByName(const char *cardName)
@@ -98,21 +76,6 @@ int dataAddCard(const Card *card)
 
     g_cardCount++;
     return DATA_OK;
-}
-
-size_t dataGetCardCount(void)
-{
-    return g_cardCount;
-}
-
-const Card *dataGetCardByIndex(size_t index)
-{
-    CardNode *pNode = findCardNodeByIndex(index);
-
-    if (pNode == NULL) {
-        return NULL;
-    }
-    return &pNode->cardData;
 }
 
 void dataCleanup(void)

@@ -1,16 +1,26 @@
 #include "business.h"
+#include "card_view.h"
 #include "menu.h"
+
+#include <stdio.h>
 
 static void handleMenuChoice(int choice)
 {
+    Card card;
+
     switch (choice) {
     case 1:
         printf("你选择了：添加卡\n");
-        bizAddCard();
+        if (bizAddCard(&card) == 0) {
+            printf("添加卡成功！\n");
+            viewShowCardSummary(&card);
+        }
         break;
     case 2:
         printf("你选择了：查询卡\n");
-        bizQueryCard();
+        if (bizQueryCard(&card) == 0) {
+            viewShowQueryCardDetails(&card);
+        }
         break;
     case 3:
         printf("你选择了：上机\n");
