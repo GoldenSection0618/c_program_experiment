@@ -1,7 +1,8 @@
 #include "data.h"
+#include "card_storage.h"
 
-static Card g_cards[MAX_CARD_COUNT];
-static size_t g_card_count = 0;
+static CardNode *g_pCardListHead = NULL;
+static size_t g_cardCount = 0;
 
 static int isCardNameEqual(const char *a, const char *b)
 {
@@ -9,6 +10,40 @@ static int isCardNameEqual(const char *a, const char *b)
         return 0;
     }
     return strcmp(a, b) == 0;
+}
+
+static CardNode *findCardNodeByName(const char *cardName)
+{
+    CardNode *pCurrent = g_pCardListHead;
+
+    if (cardName == NULL) {
+        return NULL;
+    }
+
+    while (pCurrent != NULL) {
+        if (pCurrent->cardData.nDel == 0 && isCardNameEqual(pCurrent->cardData.aCardName, cardName)) {
+            return pCurrent;
+        }
+        pCurrent = pCurrent->pNext;
+    }
+
+    return NULL;
+}
+
+static CardNode *findCardNodeByIndex(size_t index)
+{
+    CardNode *pCurrent = g_pCardListHead;
+    size_t currentIndex = 0;
+
+    while (pCurrent != NULL) {
+        if (currentIndex == index) {
+            return pCurrent;
+        }
+        currentIndex++;
+        pCurrent = pCurrent->pNext;
+    }
+
+    return NULL;
 }
 
 void dataLogOperation(const char *operation)
@@ -22,49 +57,74 @@ void dataLogOperation(const char *operation)
 
 const Card *dataFindCardByName(const char *cardName)
 {
-    size_t i = 0;
+    CardNode *pNode = findCardNodeByName(cardName);
 
-    if (cardName == NULL) {
+    if (pNode == NULL) {
         return NULL;
     }
-
-    for (i = 0; i < g_card_count; i++) {
-        if (g_cards[i].nDel == 0 && isCardNameEqual(g_cards[i].aCardName, cardName)) {
-            return &g_cards[i];
-        }
-    }
-
-    return NULL;
+    return &pNode->cardData;
 }
 
 int dataAddCard(const Card *card)
 {
+    CardNode *pNewNode = NULL;
+    CardNode *pTail = NULL;
+
     if (card == NULL) {
         return DATA_ERR_INVALID_ARG;
     }
 
-    if (g_card_count >= MAX_CARD_COUNT) {
-        return DATA_ERR_FULL;
-    }
-
-    if (dataFindCardByName(card->aCardName) != NULL) {
+    if (findCardNodeByName(card->aCardName) != NULL) {
         return DATA_ERR_DUPLICATE;
     }
 
-    g_cards[g_card_count] = *card;
-    g_card_count++;
+    pNewNode = (CardNode *)malloc(sizeof(CardNode));
+    if (pNewNode == NULL) {
+        return DATA_ERR_NO_MEMORY;
+    }
+
+    pNewNode->cardData = *card;
+    pNewNode->pNext = NULL;
+
+    if (g_pCardListHead == NULL) {
+        g_pCardListHead = pNewNode;
+    } else {
+        pTail = g_pCardListHead;
+        while (pTail->pNext != NULL) {
+            pTail = pTail->pNext;
+        }
+        pTail->pNext = pNewNode;
+    }
+
+    g_cardCount++;
     return DATA_OK;
 }
 
 size_t dataGetCardCount(void)
 {
-    return g_card_count;
+    return g_cardCount;
 }
 
 const Card *dataGetCardByIndex(size_t index)
 {
-    if (index >= g_card_count) {
+    CardNode *pNode = findCardNodeByIndex(index);
+
+    if (pNode == NULL) {
         return NULL;
     }
-    return &g_cards[index];
+    return &pNode->cardData;
+}
+
+void dataCleanup(void)
+{
+    CardNode *pCurrent = g_pCardListHead;
+
+    while (pCurrent != NULL) {
+        CardNode *pNext = pCurrent->pNext;
+        free(pCurrent);
+        pCurrent = pNext;
+    }
+
+    g_pCardListHead = NULL;
+    g_cardCount = 0;
 }

@@ -61,5 +61,6 @@ int main(void)
         printf("\n");
     } while (choice != 0);
 
+    bizShutdown();
     return 0;
 }

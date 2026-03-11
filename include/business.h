@@ -11,5 +11,6 @@ void bizRecharge(void);
 void bizRefund(void);
 void bizStatistics(void);
 void bizCancelCard(void);
+void bizShutdown(void);
 
 #endif

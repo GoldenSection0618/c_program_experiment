@@ -223,8 +223,8 @@ void bizAddCard(void)
     card.nDel = 0;
 
     ret = dataAddCard(&card);
-    if (ret == DATA_ERR_FULL) {
-        printf("卡库已满，无法继续新增。\n");
+    if (ret == DATA_ERR_NO_MEMORY) {
+        printf("系统内存不足，无法继续新增。\n");
         return;
     }
 
@@ -297,4 +297,9 @@ void bizCancelCard(void)
 {
     printf("[业务逻辑层] 注销卡功能入口。\n");
     dataLogOperation("注销卡");
+}
+
+void bizShutdown(void)
+{
+    dataCleanup();
 }

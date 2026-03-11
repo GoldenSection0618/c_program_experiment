@@ -1,8 +1,8 @@
-# 实验二：数据结构设计与卡管理（结构体数组）
+# 实验二：数据结构设计与卡管理（链表实现）
 
 ## 1. 实验目标
 1. 完成计费管理系统核心数据结构设计（`typedef struct`）。
-2. 在实验一框架基础上，使用结构体数组实现卡管理的“新增卡、查询卡”。
+2. 在实验一框架基础上，使用链表实现卡管理的“新增卡、查询卡”。
 
 ## 2. 数据结构设计
 本实验在 [model.h](../include/model.h) 中定义以下类型：
@@ -20,17 +20,18 @@
 - 已包含 `#include <time.h>`；
 - 状态码包含：`0未上机/1正在上机/2已注销/3失效`。
 
-## 3. 结构体数组存储方案
-数据存储层使用内存结构体数组：
+## 3. 链表存储方案
+数据存储层使用内存链表：
 
-- `Card g_cards[MAX_CARD_COUNT]`
-- `size_t g_card_count`
+- `CardNode *g_pCardListHead`
+- `size_t g_cardCount`
 
 数据层接口见 [data.h](../include/data.h)：
 - `dataAddCard`
 - `dataFindCardByName`
 - `dataGetCardCount`
 - `dataGetCardByIndex`
+- `dataCleanup`
 
 实现见 [repository.c](../src/data/repository.c)。
 
