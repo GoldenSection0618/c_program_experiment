@@ -14,6 +14,38 @@ output_file="$4"
 suite_base="${input_file%.input}"
 setup_script="${suite_base}.setup.sh"
 verify_script="${suite_base}.verify.sh"
+backup_state_dir="build/test_state"
+backup_name="$(basename "$suite_base")"
+backup_file="${backup_state_dir}/${backup_name}.cards.txt.bak"
+missing_marker="${backup_state_dir}/${backup_name}.cards.txt.missing"
+
+restore_cards_file() {
+    if [ -f "$backup_file" ]; then
+        mkdir -p "$(dirname data/cards.txt)"
+        mv "$backup_file" data/cards.txt
+    elif [ -f "$missing_marker" ]; then
+        rm -f data/cards.txt
+    fi
+
+    rm -f "$backup_file" "$missing_marker"
+}
+
+cleanup() {
+    restore_cards_file
+}
+
+prepare_backup_state() {
+    mkdir -p "$backup_state_dir"
+    rm -f "$backup_file" "$missing_marker"
+
+    if [ -f data/cards.txt ]; then
+        cp data/cards.txt "$backup_file"
+    else
+        : > "$missing_marker"
+    fi
+}
+
+trap cleanup EXIT
 
 if [ ! -f "$binary" ]; then
     echo "[test] error: binary not found: $binary" >&2
@@ -31,6 +63,7 @@ if [ ! -f "$expect_file" ]; then
 fi
 
 mkdir -p "$(dirname "$output_file")"
+prepare_backup_state
 
 if [ -f "$setup_script" ]; then
     bash "$setup_script" "$binary" "$input_file" "$expect_file" "$output_file"
