@@ -37,3 +37,6 @@ m4/
 .idea/
 .vscode/
 .vs/
+
+# Runtime data
+data/cards.txt

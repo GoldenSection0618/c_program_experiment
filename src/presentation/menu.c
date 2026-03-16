@@ -17,6 +17,29 @@ static void discardRemainingInputLine(void)
     } while (ch != '\n' && ch != EOF);
 }
 
+int readTextInput(const char *prompt, char *buffer, size_t size)
+{
+    char *newLine = NULL;
+
+    if (prompt == NULL || buffer == NULL || size == 0) {
+        return -1;
+    }
+
+    printf("%s", prompt);
+    if (fgets(buffer, (int)size, stdin) == NULL) {
+        return -1;
+    }
+
+    newLine = strchr(buffer, '\n');
+    if (newLine == NULL) {
+        discardRemainingInputLine();
+        return -1;
+    }
+
+    *newLine = '\0';
+    return 0;
+}
+
 void outputMenu(void)
 {
     printf("%s\n", STUDENT_INFO);
@@ -36,24 +59,15 @@ int readMenuChoice(int *choice)
 {
     char buffer[INPUT_BUF_SIZE];
     char *endptr = NULL;
-    char *newLine = NULL;
     long value = 0;
 
     if (choice == NULL) {
         return -1;
     }
 
-    printf("请输入菜单编号：");
-    if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+    if (readTextInput("请输入菜单编号：", buffer, sizeof(buffer)) != 0) {
         return -1;
     }
-
-    newLine = strchr(buffer, '\n');
-    if (newLine == NULL) {
-        discardRemainingInputLine();
-        return -1;
-    }
-    *newLine = '\0';
 
     errno = 0;
     value = strtol(buffer, &endptr, 10);

@@ -1,7 +1,10 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include <stddef.h>
+
 void outputMenu(void);
 int readMenuChoice(int *choice);
+int readTextInput(const char *prompt, char *buffer, size_t size);
 
 #endif

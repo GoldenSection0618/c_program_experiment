@@ -1,26 +1,73 @@
 #include "business.h"
 #include "card_view.h"
+#include "common.h"
 #include "menu.h"
 
 #include <stdio.h>
 
+static void handleAddCard(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    char amountText[INPUT_BUF_SIZE];
+    Card card;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    if (readTextInput("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_PASSWORD));
+        return;
+    }
+
+    if (readTextInput("请输入开卡金额（元）：", amountText, sizeof(amountText)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_AMOUNT));
+        return;
+    }
+
+    result = bizAddCard(cardName, password, amountText, &card);
+    if (result != BIZ_OK) {
+        printf("%s\n", bizGetMessage(result));
+        return;
+    }
+
+    printf("添加卡成功！\n");
+    viewShowCardSummary(&card);
+}
+
+static void handleQueryCard(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    Card card;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    result = bizQueryCard(cardName, &card);
+    if (result != BIZ_OK) {
+        printf("%s\n", bizGetMessage(result));
+        return;
+    }
+
+    viewShowQueryCardDetails(&card);
+}
+
 static void handleMenuChoice(int choice)
 {
-    Card card;
-
     switch (choice) {
     case 1:
         printf("你选择了：添加卡\n");
-        if (bizAddCard(&card) == 0) {
-            printf("添加卡成功！\n");
-            viewShowCardSummary(&card);
-        }
+        handleAddCard();
         break;
     case 2:
         printf("你选择了：查询卡\n");
-        if (bizQueryCard(&card) == 0) {
-            viewShowQueryCardDetails(&card);
-        }
+        handleQueryCard();
         break;
     case 3:
         printf("你选择了：上机\n");

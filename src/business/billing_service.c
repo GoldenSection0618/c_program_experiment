@@ -7,15 +7,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-
-static void discardRemainingInputLine(void)
-{
-    int ch = 0;
-
-    do {
-        ch = getchar();
-    } while (ch != '\n' && ch != EOF);
-}
+#include <time.h>
 
 static void trimInPlace(char *text)
 {
@@ -52,26 +44,17 @@ static void trimInPlace(char *text)
     text[end - start] = '\0';
 }
 
-static int readLine(const char *prompt, char *buffer, size_t size)
+static int normalizeInput(const char *input, char *buffer, size_t size)
 {
-    char *newLine = NULL;
-
-    if (buffer == NULL || size == 0) {
+    if (input == NULL || buffer == NULL || size == 0) {
         return -1;
     }
 
-    printf("%s", prompt);
-    if (fgets(buffer, (int)size, stdin) == NULL) {
+    if (snprintf(buffer, size, "%s", input) >= (int)size) {
         return -1;
     }
 
-    newLine = strchr(buffer, '\n');
-    if (newLine == NULL) {
-        discardRemainingInputLine();
-        return -1;
-    }
-    *newLine = '\0';
-
+    trimInPlace(buffer);
     return 0;
 }
 
@@ -156,68 +139,69 @@ static int parseMoneyToCent(const char *text, int32_t *amountCent)
     return 0;
 }
 
-static int readAmountCent(const char *prompt, int32_t *amountCent)
+static BizResult mapDataResult(DataResult result)
 {
-    char buf[INPUT_BUF_SIZE];
-
-    if (amountCent == NULL) {
-        return -1;
+    switch (result) {
+    case DATA_OK:
+        return BIZ_OK;
+    case DATA_ERR_DUPLICATE:
+        return BIZ_ERR_DUPLICATE_CARD;
+    case DATA_ERR_NO_MEMORY:
+        return BIZ_ERR_NO_MEMORY;
+    case DATA_ERR_FILE_OPEN:
+        return BIZ_ERR_FILE_OPEN;
+    case DATA_ERR_FILE_NOT_FOUND:
+        return BIZ_ERR_FILE_NOT_FOUND;
+    case DATA_ERR_FILE_EMPTY:
+        return BIZ_ERR_FILE_EMPTY;
+    case DATA_ERR_RECORD_FORMAT:
+        return BIZ_ERR_RECORD_FORMAT;
+    case DATA_ERR_TIME_PARSE:
+        return BIZ_ERR_TIME_PARSE;
+    default:
+        return BIZ_ERR_SYSTEM;
     }
-
-    if (readLine(prompt, buf, sizeof(buf)) != 0) {
-        return -1;
-    }
-    trimInPlace(buf);
-
-    return parseMoneyToCent(buf, amountCent);
 }
 
-int bizAddCard(Card *createdCard)
+static BizResult addCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
+    char amountText[INPUT_BUF_SIZE];
     int32_t amountCent = 0;
     Card card;
     time_t now = 0;
-    int ret = DATA_OK;
+    int readResult = 0;
+    DataResult dataResult = DATA_OK;
 
-    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
-        printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return -1;
-    }
-    trimInPlace(cardName);
-    if (!isValidCardName(cardName)) {
-        printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return -1;
+    if (normalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
     }
 
-    if (dataFindCardByName(cardName) != NULL) {
-        printf("卡号已存在，不能重复添加！\n");
-        return -1;
+    if (normalizeInput(passwordInput, password, sizeof(password)) != 0 || !isValidPassword(password)) {
+        return BIZ_ERR_INVALID_PASSWORD;
     }
 
-    if (readLine("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
-        printf("密码输入不合法，应为1~8位且不能为空。\n");
-        return -1;
-    }
-    trimInPlace(password);
-    if (!isValidPassword(password)) {
-        printf("密码输入不合法，应为1~8位且不能为空。\n");
-        return -1;
+    if (normalizeInput(amountInput, amountText, sizeof(amountText)) != 0 || parseMoneyToCent(amountText, &amountCent) != 0) {
+        return BIZ_ERR_INVALID_AMOUNT;
     }
 
-    if (readAmountCent("请输入开卡金额（元）：", &amountCent) != 0) {
-        printf("开卡金额输入不合法，应为非负数字。\n");
-        return -1;
-    }
     if (amountCent >= MAX_BALANCE_CENT) {
-        printf("余额过大，卡内余额必须小于1000000元。\n");
-        return -1;
+        return BIZ_ERR_BALANCE_TOO_LARGE;
+    }
+
+    readResult = readCard();
+    if (readResult < 0 && readResult != DATA_ERR_FILE_NOT_FOUND && readResult != DATA_ERR_FILE_EMPTY) {
+        return mapDataResult((DataResult)readResult);
+    }
+
+    if (isCardExists(cardName)) {
+        return BIZ_ERR_DUPLICATE_CARD;
     }
 
     memset(&card, 0, sizeof(card));
-    snprintf(card.aCardName, sizeof(card.aCardName), "%s", cardName);
-    snprintf(card.aPwd, sizeof(card.aPwd), "%s", password);
+    memcpy(card.aCardName, cardName, strlen(cardName) + 1);
+    memcpy(card.aPwd, password, strlen(password) + 1);
     card.nStatus = CARD_STATUS_OFFLINE;
     now = time(NULL);
     card.tStart = now;
@@ -228,50 +212,93 @@ int bizAddCard(Card *createdCard)
     card.nBalanceCent = amountCent;
     card.nDel = 0;
 
-    ret = dataAddCard(&card);
-    if (ret == DATA_ERR_NO_MEMORY) {
-        printf("系统内存不足，无法继续新增。\n");
-        return -1;
+    dataResult = (DataResult)dataAddCard(&card);
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
     }
 
-    if (ret != DATA_OK) {
-        printf("添加卡失败。\n");
-        return -1;
+    dataResult = saveCard(&card);
+    if (dataResult != DATA_OK) {
+        (void)readCard();
+        return mapDataResult(dataResult);
     }
 
     logOperation("添加卡");
     if (createdCard != NULL) {
         *createdCard = card;
     }
-    return 0;
+    return BIZ_OK;
 }
 
-int bizQueryCard(Card *queriedCard)
+static BizResult queryCard(const char *cardNameInput, Card *queriedCard)
 {
     char cardName[INPUT_BUF_SIZE];
     const Card *card = NULL;
+    int readResult = 0;
 
-    if (readLine("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
-        printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return -1;
+    if (normalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 || !isValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
     }
-    trimInPlace(cardName);
-    if (!isValidCardName(cardName)) {
-        printf("卡号输入不合法，应为1~18位且不能为空。\n");
-        return -1;
+
+    readResult = readCard();
+    if (readResult < 0) {
+        return mapDataResult((DataResult)readResult);
     }
 
     card = dataFindCardByName(cardName);
     if (card == NULL) {
-        printf("没有该卡的信息！\n");
-        return -1;
+        return BIZ_ERR_CARD_NOT_FOUND;
     }
 
     logOperation("查询卡");
     if (queriedCard != NULL) {
         *queriedCard = *card;
     }
-    return 0;
+    return BIZ_OK;
+}
+
+BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
+{
+    return addCard(cardNameInput, passwordInput, amountInput, createdCard);
+}
+
+BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
+{
+    return queryCard(cardNameInput, queriedCard);
+}
+
+const char *bizGetMessage(BizResult result)
+{
+    switch (result) {
+    case BIZ_OK:
+        return "操作成功。";
+    case BIZ_ERR_INVALID_CARD_NAME:
+        return "卡号输入不合法，应为1~18位且不能为空。";
+    case BIZ_ERR_INVALID_PASSWORD:
+        return "密码输入不合法，应为1~8位且不能为空。";
+    case BIZ_ERR_INVALID_AMOUNT:
+        return "开卡金额输入不合法，应为非负数字。";
+    case BIZ_ERR_BALANCE_TOO_LARGE:
+        return "余额过大，卡内余额必须小于1000000元。";
+    case BIZ_ERR_DUPLICATE_CARD:
+        return "卡号已存在，不能重复添加！";
+    case BIZ_ERR_CARD_NOT_FOUND:
+        return "没有该卡的信息！";
+    case BIZ_ERR_FILE_OPEN:
+        return "卡信息文件打开失败。";
+    case BIZ_ERR_FILE_NOT_FOUND:
+        return "卡信息文件不存在。";
+    case BIZ_ERR_FILE_EMPTY:
+        return "卡信息文件为空。";
+    case BIZ_ERR_RECORD_FORMAT:
+        return "卡信息文件记录格式错误。";
+    case BIZ_ERR_TIME_PARSE:
+        return "卡信息文件时间字段解析失败。";
+    case BIZ_ERR_NO_MEMORY:
+        return "系统内存不足，无法继续操作。";
+    default:
+        return "系统内部错误。";
+    }
 }
 
 void bizStartBilling(void)

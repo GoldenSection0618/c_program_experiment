@@ -6,7 +6,7 @@ MODE ?= release
 TARGET ?= billing_system
 BUILD_DIR ?= build
 FRONTEND_DIR ?= frontend
-LAB ?= exp2
+LAB ?= exp3
 TEST_SUITE ?= menu
 
 SRC_DIR := src
