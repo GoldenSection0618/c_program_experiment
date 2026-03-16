@@ -67,7 +67,20 @@ static int isValidCardName(const char *cardName)
     }
 
     len = strlen(cardName);
-    return len > 0 && len <= CARD_NAME_MAX_LEN;
+    if (!(len > 0 && len <= CARD_NAME_MAX_LEN)) {
+        return 0;
+    }
+
+    while (*cardName != '\0') {
+        unsigned char ch = (unsigned char)*cardName;
+
+        if (!(isalnum(ch) || ch == '_' || ch == '@' || ch == '#' || ch == '$' || ch == '%' || ch == '!')) {
+            return 0;
+        }
+        cardName++;
+    }
+
+    return 1;
 }
 
 static int isValidPassword(const char *password)
@@ -79,7 +92,20 @@ static int isValidPassword(const char *password)
     }
 
     len = strlen(password);
-    return len > 0 && len <= CARD_PWD_MAX_LEN;
+    if (!(len > 0 && len <= CARD_PWD_MAX_LEN)) {
+        return 0;
+    }
+
+    while (*password != '\0') {
+        unsigned char ch = (unsigned char)*password;
+
+        if (!(isalnum(ch) || ch == '_' || ch == '@' || ch == '#' || ch == '$' || ch == '%' || ch == '!')) {
+            return 0;
+        }
+        password++;
+    }
+
+    return 1;
 }
 
 static int parseMoneyToCent(const char *text, int32_t *amountCent)
@@ -273,9 +299,9 @@ const char *bizGetMessage(BizResult result)
     case BIZ_OK:
         return "操作成功。";
     case BIZ_ERR_INVALID_CARD_NAME:
-        return "卡号输入不合法，应为1~18位且不能为空。";
+        return "卡号输入不合法，应为1~18位，且只能包含大小写字母、数字和 _ @ # $ % !。";
     case BIZ_ERR_INVALID_PASSWORD:
-        return "密码输入不合法，应为1~8位且不能为空。";
+        return "密码输入不合法，应为1~8位，且只能包含大小写字母、数字和 _ @ # $ % !。";
     case BIZ_ERR_INVALID_AMOUNT:
         return "开卡金额输入不合法，应为非负数字。";
     case BIZ_ERR_BALANCE_TOO_LARGE:
