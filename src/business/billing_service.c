@@ -108,39 +108,47 @@ static int isValidPassword(const char *password)
     return 1;
 }
 
-static int parseMoneyToCent(const char *text, int32_t *amountCent)
+typedef enum MoneyParseResult {
+    MONEY_PARSE_OK = 0,
+    MONEY_PARSE_INVALID = -1,
+    MONEY_PARSE_TOO_LARGE = -2
+} MoneyParseResult;
+
+static MoneyParseResult parseMoneyToCent(const char *text, int32_t *amountCent)
 {
     const char *p = text;
     int64_t yuan = 0;
     int32_t frac = 0;
     int fracDigits = 0;
     int64_t totalCent = 0;
+    int digit = 0;
 
     if (text == NULL || amountCent == NULL) {
-        return -1;
+        return MONEY_PARSE_INVALID;
     }
 
     if (*p == '\0') {
-        return -1;
+        return MONEY_PARSE_INVALID;
     }
 
     while (*p >= '0' && *p <= '9') {
-        yuan = yuan * 10 + (int64_t)(*p - '0');
-        if (yuan > (INT32_MAX / 100)) {
-            return -1;
+        digit = *p - '0';
+        if (yuan > (INT64_MAX - digit) / 10) {
+            return MONEY_PARSE_TOO_LARGE;
         }
+        yuan = yuan * 10 + digit;
         p++;
     }
 
     if (p == text) {
-        return -1;
+        return MONEY_PARSE_INVALID;
     }
 
     if (*p == '.') {
         p++;
         while (*p >= '0' && *p <= '9') {
             if (fracDigits >= 2) {
-                return -1;
+                return MONEY_PARSE_INVALID;
             }
             frac = (int32_t)(frac * 10 + (*p - '0'));
             fracDigits++;
@@ -149,20 +157,26 @@ static int parseMoneyToCent(const char *text, int32_t *amountCent)
     }
 
     if (*p != '\0') {
-        return -1;
+        return MONEY_PARSE_INVALID;
     }
 
     if (fracDigits == 1) {
         frac *= 10;
     }
 
+    if (yuan > (INT64_MAX - frac) / 100) {
+        return MONEY_PARSE_TOO_LARGE;
+    }
     totalCent = yuan * 100 + frac;
-    if (totalCent < 0 || totalCent > INT32_MAX) {
-        return -1;
+    if (totalCent < 0) {
+        return MONEY_PARSE_INVALID;
+    }
+    if (totalCent >= MAX_BALANCE_CENT || totalCent > INT32_MAX) {
+        return MONEY_PARSE_TOO_LARGE;
     }
 
     *amountCent = (int32_t)totalCent;
-    return 0;
+    return MONEY_PARSE_OK;
 }
 
 static BizResult mapDataResult(DataResult result)
@@ -195,6 +209,7 @@ static BizResult addCard(const char *cardNameInput, const char *passwordInput, c
     char password[INPUT_BUF_SIZE];
     char amountText[INPUT_BUF_SIZE];
     int32_t amountCent = 0;
+    MoneyParseResult moneyParseResult = MONEY_PARSE_OK;
     Card card;
     time_t now = 0;
     int readResult = 0;
@@ -208,11 +223,15 @@ static BizResult addCard(const char *cardNameInput, const char *passwordInput, c
         return BIZ_ERR_INVALID_PASSWORD;
     }
 
-    if (normalizeInput(amountInput, amountText, sizeof(amountText)) != 0 || parseMoneyToCent(amountText, &amountCent) != 0) {
+    if (normalizeInput(amountInput, amountText, sizeof(amountText)) != 0) {
         return BIZ_ERR_INVALID_AMOUNT;
     }
 
-    if (amountCent >= MAX_BALANCE_CENT) {
+    moneyParseResult = parseMoneyToCent(amountText, &amountCent);
+    if (moneyParseResult == MONEY_PARSE_INVALID) {
+        return BIZ_ERR_INVALID_AMOUNT;
+    }
+    if (moneyParseResult == MONEY_PARSE_TOO_LARGE) {
         return BIZ_ERR_BALANCE_TOO_LARGE;
     }
 
@@ -303,7 +322,7 @@ const char *bizGetMessage(BizResult result)
     case BIZ_ERR_INVALID_PASSWORD:
         return "密码输入不合法，应为1~8位，且只能包含大小写字母、数字和 _ @ # $ % !。";
     case BIZ_ERR_INVALID_AMOUNT:
-        return "开卡金额输入不合法，应为非负数字。";
+        return "开卡金额输入不合法，应为非负金额，且最多保留两位小数。";
     case BIZ_ERR_BALANCE_TOO_LARGE:
         return "余额过大，卡内余额必须小于1000000元。";
     case BIZ_ERR_DUPLICATE_CARD:
