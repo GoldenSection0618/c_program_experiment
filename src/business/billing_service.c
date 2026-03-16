@@ -311,15 +311,15 @@ const char *bizGetMessage(BizResult result)
     case BIZ_ERR_CARD_NOT_FOUND:
         return "没有该卡的信息！";
     case BIZ_ERR_FILE_OPEN:
-        return "卡信息文件打开失败。";
+        return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
-        return "卡信息文件不存在。";
+        return "数据文件异常：卡信息文件不存在。";
     case BIZ_ERR_FILE_EMPTY:
-        return "卡信息文件为空。";
+        return "数据文件内容异常：卡信息文件为空。";
     case BIZ_ERR_RECORD_FORMAT:
-        return "卡信息文件记录格式错误。";
+        return "数据文件内容异常：卡信息文件记录格式错误。";
     case BIZ_ERR_TIME_PARSE:
-        return "卡信息文件时间字段解析失败。";
+        return "数据文件内容异常：卡信息文件时间字段解析失败。";
     case BIZ_ERR_NO_MEMORY:
         return "系统内存不足，无法继续操作。";
     default:

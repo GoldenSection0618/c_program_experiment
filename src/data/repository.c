@@ -391,7 +391,6 @@ DataResult saveCard(const Card *card)
     formatTimeString(card->tLast, lastBuf, sizeof(lastBuf));
 
     if (fprintf(fp,
-                // "%s##%s##%d##%s##%s##%d##%s##%d##%d##%d\n",
                 "%s|%s|%d|%s|%s|%d|%s|%d|%d|%d\n",
                 card->aCardName,
                 card->aPwd,
