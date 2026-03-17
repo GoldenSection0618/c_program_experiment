@@ -466,10 +466,6 @@ int readCard(void)
         return DATA_ERR_FILE_OPEN;
     }
 
-    if (count == 0) {
-        return DATA_ERR_FILE_EMPTY;
-    }
-
     return count;
 }
 
@@ -535,7 +531,7 @@ DataResult updateCard(const Card *card)
     }
 
     readResult = readCard();
-    if (readResult < 0 && readResult != DATA_ERR_FILE_EMPTY) {
+    if (readResult < 0) {
         return (DataResult)readResult;
     }
 

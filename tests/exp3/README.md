@@ -8,7 +8,7 @@
 - `menu_add_amount_precision_invalid`：超过两位小数的金额输入统一按格式非法处理
 - `menu_add_special_chars_valid`：允许字符集 `A-Za-z0-9_@#$%!` 可正常保存和查询
 - `menu_query_missing_file`：文件不存在时的查询提示
-- `menu_query_empty_file`：空文件查询提示
+- `menu_query_empty_file`：空文件按无记录处理，查询返回“没有该卡的信息！”
 - `menu_record_format_error`：损坏记录格式保护
 - `menu_time_parse_error`：时间字段解析保护
 - `menu_persist_across_restart`：新增后重启程序仍可查询

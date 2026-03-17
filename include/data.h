@@ -12,10 +12,9 @@ typedef enum DataResult {
     DATA_ERR_INVALID_ARG = -3,
     DATA_ERR_FILE_OPEN = -4,
     DATA_ERR_FILE_NOT_FOUND = -5,
-    DATA_ERR_FILE_EMPTY = -6,
-    DATA_ERR_RECORD_FORMAT = -7,
-    DATA_ERR_TIME_PARSE = -8,
-    DATA_ERR_NOT_FOUND = -9
+    DATA_ERR_RECORD_FORMAT = -6,
+    DATA_ERR_TIME_PARSE = -7,
+    DATA_ERR_NOT_FOUND = -8
 } DataResult;
 
 int dataAddCard(const Card *card);

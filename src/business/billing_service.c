@@ -192,8 +192,6 @@ static BizResult mapDataResult(DataResult result)
         return BIZ_ERR_FILE_OPEN;
     case DATA_ERR_FILE_NOT_FOUND:
         return BIZ_ERR_FILE_NOT_FOUND;
-    case DATA_ERR_FILE_EMPTY:
-        return BIZ_ERR_FILE_EMPTY;
     case DATA_ERR_RECORD_FORMAT:
         return BIZ_ERR_RECORD_FORMAT;
     case DATA_ERR_TIME_PARSE:
@@ -203,7 +201,7 @@ static BizResult mapDataResult(DataResult result)
     }
 }
 
-static BizResult addCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
+BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
@@ -236,7 +234,7 @@ static BizResult addCard(const char *cardNameInput, const char *passwordInput, c
     }
 
     readResult = readCard();
-    if (readResult < 0 && readResult != DATA_ERR_FILE_NOT_FOUND && readResult != DATA_ERR_FILE_EMPTY) {
+    if (readResult < 0 && readResult != DATA_ERR_FILE_NOT_FOUND) {
         return mapDataResult((DataResult)readResult);
     }
 
@@ -275,7 +273,7 @@ static BizResult addCard(const char *cardNameInput, const char *passwordInput, c
     return BIZ_OK;
 }
 
-static BizResult queryCard(const char *cardNameInput, Card *queriedCard)
+BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
 {
     char cardName[INPUT_BUF_SIZE];
     const Card *card = NULL;
@@ -302,16 +300,6 @@ static BizResult queryCard(const char *cardNameInput, Card *queriedCard)
     return BIZ_OK;
 }
 
-BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
-{
-    return addCard(cardNameInput, passwordInput, amountInput, createdCard);
-}
-
-BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
-{
-    return queryCard(cardNameInput, queriedCard);
-}
-
 const char *bizGetMessage(BizResult result)
 {
     switch (result) {
@@ -333,8 +321,6 @@ const char *bizGetMessage(BizResult result)
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
         return "数据文件异常：卡信息文件不存在。";
-    case BIZ_ERR_FILE_EMPTY:
-        return "数据文件内容异常：卡信息文件为空。";
     case BIZ_ERR_RECORD_FORMAT:
         return "数据文件内容异常：卡信息文件记录格式错误。";
     case BIZ_ERR_TIME_PARSE:
