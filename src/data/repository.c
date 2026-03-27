@@ -329,6 +329,37 @@ const Card *dataFindCardByName(const char *cardName)
     return &pNode->cardData;
 }
 
+DataResult dataDeleteCardByName(const char *cardName)
+{
+    CardNode *pCurrent = g_pCardListHead;
+    CardNode *pPrev = NULL;
+
+    if (cardName == NULL || *cardName == '\0') {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    while (pCurrent != NULL) {
+        if (isCardNameEqual(pCurrent->cardData.aCardName, cardName)) {
+            if (pPrev == NULL) {
+                g_pCardListHead = pCurrent->pNext;
+            } else {
+                pPrev->pNext = pCurrent->pNext;
+            }
+
+            free(pCurrent);
+            if (g_cardCount > 0) {
+                g_cardCount--;
+            }
+            return DATA_OK;
+        }
+
+        pPrev = pCurrent;
+        pCurrent = pCurrent->pNext;
+    }
+
+    return DATA_ERR_NOT_FOUND;
+}
+
 int dataAddCard(const Card *card)
 {
     CardNode *pNewNode = NULL;
