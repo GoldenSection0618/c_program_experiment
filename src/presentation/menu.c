@@ -1,4 +1,6 @@
 #include "menu.h"
+#include "business.h"
+#include "card_ui.h"
 #include "common.h"
 
 #include <ctype.h>
@@ -95,4 +97,53 @@ int readChoiceInput(const char *prompt, int *choice)
 int readMenuChoice(int *choice)
 {
     return readChoiceInput("请输入菜单编号：", choice);
+}
+
+void showMenuInputFormatError(void)
+{
+    printf("输入格式错误，请输入数字菜单编号（0~8）。\n");
+}
+
+void dispatchMenuChoice(int choice)
+{
+    switch (choice) {
+    case 1:
+        printf("你选择了：添加卡\n");
+        handleAddCardInteraction();
+        break;
+    case 2:
+        printf("你选择了：查询卡\n");
+        handleQueryCardInteraction();
+        break;
+    case 3:
+        printf("你选择了：上机\n");
+        bizStartBilling();
+        break;
+    case 4:
+        printf("你选择了：下机\n");
+        bizStopBilling();
+        break;
+    case 5:
+        printf("你选择了：充值\n");
+        bizRecharge();
+        break;
+    case 6:
+        printf("你选择了：退费\n");
+        bizRefund();
+        break;
+    case 7:
+        printf("你选择了：查询统计\n");
+        bizStatistics();
+        break;
+    case 8:
+        printf("你选择了：注销卡\n");
+        bizCancelCard();
+        break;
+    case 0:
+        printf("系统已退出。\n");
+        break;
+    default:
+        printf("无效菜单编号，请输入 0~8。\n");
+        break;
+    }
 }
