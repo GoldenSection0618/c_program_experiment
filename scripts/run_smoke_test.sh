@@ -18,6 +18,8 @@ backup_state_dir="build/test_state"
 backup_name="$(basename "$suite_base")"
 backup_file="${backup_state_dir}/${backup_name}.cards.txt.bak"
 missing_marker="${backup_state_dir}/${backup_name}.cards.txt.missing"
+billing_backup_file="${backup_state_dir}/${backup_name}.billings.txt.bak"
+billing_missing_marker="${backup_state_dir}/${backup_name}.billings.txt.missing"
 
 restore_cards_file() {
     if [ -f "$backup_file" ]; then
@@ -30,8 +32,20 @@ restore_cards_file() {
     rm -f "$backup_file" "$missing_marker"
 }
 
+restore_billings_file() {
+    if [ -f "$billing_backup_file" ]; then
+        mkdir -p "$(dirname data/billings.txt)"
+        mv "$billing_backup_file" data/billings.txt
+    elif [ -f "$billing_missing_marker" ]; then
+        rm -f data/billings.txt
+    fi
+
+    rm -f "$billing_backup_file" "$billing_missing_marker"
+}
+
 cleanup() {
     restore_cards_file
+    restore_billings_file
 }
 
 prepare_backup_state() {
@@ -42,6 +56,12 @@ prepare_backup_state() {
         cp data/cards.txt "$backup_file"
     else
         : > "$missing_marker"
+    fi
+
+    if [ -f data/billings.txt ]; then
+        cp data/billings.txt "$billing_backup_file"
+    else
+        : > "$billing_missing_marker"
     fi
 }
 

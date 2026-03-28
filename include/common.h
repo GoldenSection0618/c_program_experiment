@@ -8,6 +8,7 @@
 #define MENU_MIN 0
 #define MENU_MAX 8
 #define CARD_DATA_FILE_PATH "data/cards.txt"
+#define BILLING_DATA_FILE_PATH "data/billings.txt"
 #define CARD_TIME_STR_LEN 19
 
 #define ENABLE_LOG 1

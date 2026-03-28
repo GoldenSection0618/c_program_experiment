@@ -40,4 +40,5 @@ m4/
 
 # Runtime data
 data/cards.txt
+data/billings.txt
 data/card.bin
