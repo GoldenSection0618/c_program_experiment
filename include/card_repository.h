@@ -1,5 +1,5 @@
-#ifndef DATA_H
-#define DATA_H
+#ifndef CARD_REPOSITORY_H
+#define CARD_REPOSITORY_H
 
 #include <stddef.h>
 
@@ -25,11 +25,7 @@ DataResult dataQueryCardsByKeyword(const char *keyword,
                                    size_t capacity,
                                    size_t *actualCount,
                                    size_t *requiredCount);
-DataResult dataSaveCard(const Card *card);
-int dataLoadCards(void);
-int dataGetCardCount(void);
 int dataCardExists(const char *cardName);
-DataResult dataUpdateCard(const Card *card);
 void dataCleanup(void);
 
 #endif
