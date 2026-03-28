@@ -202,6 +202,24 @@ static BizResult mapDataResult(DataResult result)
     }
 }
 
+static BizResult prepareFuzzyQueryKeyword(const char *keywordInput,
+                                          char *keyword,
+                                          size_t keywordSize)
+{
+    int readResult = 0;
+
+    if (normalizeInput(keywordInput, keyword, keywordSize) != 0 || !isValidCardName(keyword)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    readResult = readCard();
+    if (readResult < 0) {
+        return mapDataResult((DataResult)readResult);
+    }
+
+    return BIZ_OK;
+}
+
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -301,28 +319,21 @@ BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
     return BIZ_OK;
 }
 
-BizResult bizFuzzyQueryCards(const char *keywordInput, CardQueryList *resultList)
+BizResult bizCountFuzzyQueryCards(const char *keywordInput, size_t *matchCount)
 {
     char keyword[INPUT_BUF_SIZE];
     size_t count = 0;
-    size_t copied = 0;
-    int readResult = 0;
-    Card *cards = NULL;
+    BizResult result = BIZ_OK;
 
-    if (resultList == NULL) {
+    if (matchCount == NULL) {
         return BIZ_ERR_SYSTEM;
     }
 
-    resultList->items = NULL;
-    resultList->count = 0;
+    *matchCount = 0;
 
-    if (normalizeInput(keywordInput, keyword, sizeof(keyword)) != 0 || !isValidCardName(keyword)) {
-        return BIZ_ERR_INVALID_CARD_NAME;
-    }
-
-    readResult = readCard();
-    if (readResult < 0) {
-        return mapDataResult((DataResult)readResult);
+    result = prepareFuzzyQueryKeyword(keywordInput, keyword, sizeof(keyword));
+    if (result != BIZ_OK) {
+        return result;
     }
 
     count = dataCountCardsByKeyword(keyword);
@@ -330,32 +341,45 @@ BizResult bizFuzzyQueryCards(const char *keywordInput, CardQueryList *resultList
         return BIZ_ERR_NO_MATCHED_CARD;
     }
 
-    cards = (Card *)malloc(count * sizeof(Card));
-    if (cards == NULL) {
-        return BIZ_ERR_NO_MEMORY;
+    *matchCount = count;
+    return BIZ_OK;
+}
+
+BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t capacity, size_t *actualCount)
+{
+    char keyword[INPUT_BUF_SIZE];
+    size_t count = 0;
+    size_t copied = 0;
+    BizResult result = BIZ_OK;
+
+    if (buffer == NULL || actualCount == NULL) {
+        return BIZ_ERR_SYSTEM;
     }
 
-    copied = dataCopyCardsByKeyword(keyword, cards, count);
+    *actualCount = 0;
+
+    result = prepareFuzzyQueryKeyword(keywordInput, keyword, sizeof(keyword));
+    if (result != BIZ_OK) {
+        return result;
+    }
+
+    count = dataCountCardsByKeyword(keyword);
+    if (count == 0) {
+        return BIZ_ERR_NO_MATCHED_CARD;
+    }
+
+    if (capacity < count) {
+        return BIZ_ERR_SYSTEM;
+    }
+
+    copied = dataCopyCardsByKeyword(keyword, buffer, capacity);
     if (copied != count) {
-        free(cards);
         return BIZ_ERR_SYSTEM;
     }
 
     logOperation("模糊查询");
-    resultList->items = cards;
-    resultList->count = count;
+    *actualCount = copied;
     return BIZ_OK;
-}
-
-void bizFreeCardQueryList(CardQueryList *resultList)
-{
-    if (resultList == NULL) {
-        return;
-    }
-
-    free(resultList->items);
-    resultList->items = NULL;
-    resultList->count = 0;
 }
 
 const char *bizGetMessage(BizResult result)

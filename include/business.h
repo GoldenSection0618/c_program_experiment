@@ -23,15 +23,10 @@ typedef enum BizResult {
     BIZ_ERR_NO_MATCHED_CARD = -13
 } BizResult;
 
-typedef struct CardQueryList {
-    Card *items;
-    size_t count;
-} CardQueryList;
-
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);
 BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard);
-BizResult bizFuzzyQueryCards(const char *keywordInput, CardQueryList *resultList);
-void bizFreeCardQueryList(CardQueryList *resultList);
+BizResult bizCountFuzzyQueryCards(const char *keywordInput, size_t *matchCount);
+BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t capacity, size_t *actualCount);
 const char *bizGetMessage(BizResult result);
 void bizStartBilling(void);
 void bizStopBilling(void);

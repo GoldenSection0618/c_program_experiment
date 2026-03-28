@@ -5,6 +5,7 @@
 #include "common.h"
 #include "menu.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 void handleAddCardInteraction(void)
@@ -44,7 +45,9 @@ void handleQueryCardInteraction(void)
 {
     char queryText[INPUT_BUF_SIZE];
     Card card;
-    CardQueryList queryList;
+    Card *cards = NULL;
+    size_t matchCount = 0;
+    size_t actualCount = 0;
     int queryMode = 0;
     BizResult result = BIZ_OK;
 
@@ -76,14 +79,27 @@ void handleQueryCardInteraction(void)
             return;
         }
 
-        result = bizFuzzyQueryCards(queryText, &queryList);
+        result = bizCountFuzzyQueryCards(queryText, &matchCount);
         if (result != BIZ_OK) {
             printf("%s\n", bizGetMessage(result));
             return;
         }
 
-        viewShowFuzzyQueryResults(queryText, queryList.items, queryList.count);
-        bizFreeCardQueryList(&queryList);
+        cards = (Card *)malloc(matchCount * sizeof(Card));
+        if (cards == NULL) {
+            printf("%s\n", bizGetMessage(BIZ_ERR_NO_MEMORY));
+            return;
+        }
+
+        result = bizFillFuzzyQueryCards(queryText, cards, matchCount, &actualCount);
+        if (result != BIZ_OK) {
+            free(cards);
+            printf("%s\n", bizGetMessage(result));
+            return;
+        }
+
+        viewShowFuzzyQueryResults(queryText, cards, actualCount);
+        free(cards);
         break;
     default:
         printf("无效查询方式，请输入 1~2。\n");
