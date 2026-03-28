@@ -20,6 +20,8 @@ static const char *cardStatusToText(int status)
     }
 }
 
+static void formatMoneyFromCent(int32_t amountCent, char *buffer, size_t size);
+
 static void formatTimeString(time_t ts, char *buffer, size_t size)
 {
     struct tm *local = NULL;
@@ -116,6 +118,93 @@ static void printCellRule(int width)
     }
 }
 
+static void printQueryTableHeader(int cardColWidth,
+                                  int statusColWidth,
+                                  int balanceColWidth,
+                                  int totalUseColWidth,
+                                  int useCountColWidth,
+                                  int lastUseTimeColWidth)
+{
+    printCellRule(cardColWidth + 2);
+    printCellRule(statusColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(totalUseColWidth + 2);
+    printCellRule(useCountColWidth + 2);
+    printCellRule(lastUseTimeColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("卡状态", statusColWidth);
+    printf(" | ");
+    printCellLeftUtf8("余额", balanceColWidth);
+    printf(" | ");
+    printCellLeftUtf8("累计使用", totalUseColWidth);
+    printf(" | ");
+    printCellLeftUtf8("使用次数", useCountColWidth);
+    printf(" | ");
+    printCellLeftUtf8("最后使用时间", lastUseTimeColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(statusColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(totalUseColWidth + 2);
+    printCellRule(useCountColWidth + 2);
+    printCellRule(lastUseTimeColWidth + 2);
+    printf("+\n");
+}
+
+static void printQueryTableRow(const Card *card,
+                               int cardColWidth,
+                               int statusColWidth,
+                               int balanceColWidth,
+                               int totalUseColWidth,
+                               int useCountColWidth,
+                               int lastUseTimeColWidth)
+{
+    char lastUseBuf[32];
+    char balanceBuf[32];
+    char totalUseBuf[32];
+    char useCountBuf[16];
+
+    formatTimeString(card->tLast, lastUseBuf, sizeof(lastUseBuf));
+    formatMoneyFromCent(card->nBalanceCent, balanceBuf, sizeof(balanceBuf));
+    formatMoneyFromCent(card->nTotalUseCent, totalUseBuf, sizeof(totalUseBuf));
+    snprintf(useCountBuf, sizeof(useCountBuf), "%d", card->nUseCount);
+
+    printf("| ");
+    printCellLeftUtf8(card->aCardName, cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8(cardStatusToText(card->nStatus), statusColWidth);
+    printf(" | ");
+    printCellRightAscii(balanceBuf, balanceColWidth);
+    printf(" | ");
+    printCellRightAscii(totalUseBuf, totalUseColWidth);
+    printf(" | ");
+    printCellRightAscii(useCountBuf, useCountColWidth);
+    printf(" | ");
+    printCellLeftUtf8(lastUseBuf, lastUseTimeColWidth);
+    printf(" |\n");
+}
+
+static void printQueryTableFooter(int cardColWidth,
+                                  int statusColWidth,
+                                  int balanceColWidth,
+                                  int totalUseColWidth,
+                                  int useCountColWidth,
+                                  int lastUseTimeColWidth)
+{
+    printCellRule(cardColWidth + 2);
+    printCellRule(statusColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(totalUseColWidth + 2);
+    printCellRule(useCountColWidth + 2);
+    printCellRule(lastUseTimeColWidth + 2);
+    printf("+\n");
+}
+
 static void formatMoneyFromCent(int32_t amountCent, char *buffer, size_t size)
 {
     int32_t absCent = amountCent;
@@ -201,70 +290,69 @@ void viewShowQueryCardDetails(const Card *card)
     const int totalUseColWidth = 10;
     const int useCountColWidth = 8;
     const int lastUseTimeColWidth = 19;
-    char lastUseBuf[32];
-    char balanceBuf[32];
-    char totalUseBuf[32];
-    char useCountBuf[16];
-
     if (card == NULL) {
         return;
     }
 
-    formatTimeString(card->tLast, lastUseBuf, sizeof(lastUseBuf));
-    formatMoneyFromCent(card->nBalanceCent, balanceBuf, sizeof(balanceBuf));
-    formatMoneyFromCent(card->nTotalUseCent, totalUseBuf, sizeof(totalUseBuf));
-    snprintf(useCountBuf, sizeof(useCountBuf), "%d", card->nUseCount);
-
     printf("查询结果：\n");
-    printCellRule(cardColWidth + 2);
-    printCellRule(statusColWidth + 2);
-    printCellRule(balanceColWidth + 2);
-    printCellRule(totalUseColWidth + 2);
-    printCellRule(useCountColWidth + 2);
-    printCellRule(lastUseTimeColWidth + 2);
-    printf("+\n");
+    printQueryTableHeader(cardColWidth,
+                          statusColWidth,
+                          balanceColWidth,
+                          totalUseColWidth,
+                          useCountColWidth,
+                          lastUseTimeColWidth);
+    printQueryTableRow(card,
+                       cardColWidth,
+                       statusColWidth,
+                       balanceColWidth,
+                       totalUseColWidth,
+                       useCountColWidth,
+                       lastUseTimeColWidth);
+    printQueryTableFooter(cardColWidth,
+                          statusColWidth,
+                          balanceColWidth,
+                          totalUseColWidth,
+                          useCountColWidth,
+                          lastUseTimeColWidth);
+}
 
-    printf("| ");
-    printCellLeftUtf8("卡号", cardColWidth);
-    printf(" | ");
-    printCellLeftUtf8("卡状态", statusColWidth);
-    printf(" | ");
-    printCellLeftUtf8("余额", balanceColWidth);
-    printf(" | ");
-    printCellLeftUtf8("累计使用", totalUseColWidth);
-    printf(" | ");
-    printCellLeftUtf8("使用次数", useCountColWidth);
-    printf(" | ");
-    printCellLeftUtf8("最后使用时间", lastUseTimeColWidth);
-    printf(" |\n");
+void viewShowFuzzyQueryResults(const char *keyword, const Card *cards, size_t count)
+{
+    const int cardColWidth = 18;
+    const int statusColWidth = 8;
+    const int balanceColWidth = 10;
+    const int totalUseColWidth = 10;
+    const int useCountColWidth = 8;
+    const int lastUseTimeColWidth = 19;
+    size_t index = 0;
 
-    printCellRule(cardColWidth + 2);
-    printCellRule(statusColWidth + 2);
-    printCellRule(balanceColWidth + 2);
-    printCellRule(totalUseColWidth + 2);
-    printCellRule(useCountColWidth + 2);
-    printCellRule(lastUseTimeColWidth + 2);
-    printf("+\n");
+    if (keyword == NULL || cards == NULL || count == 0) {
+        return;
+    }
 
-    printf("| ");
-    printCellLeftUtf8(card->aCardName, cardColWidth);
-    printf(" | ");
-    printCellLeftUtf8(cardStatusToText(card->nStatus), statusColWidth);
-    printf(" | ");
-    printCellRightAscii(balanceBuf, balanceColWidth);
-    printf(" | ");
-    printCellRightAscii(totalUseBuf, totalUseColWidth);
-    printf(" | ");
-    printCellRightAscii(useCountBuf, useCountColWidth);
-    printf(" | ");
-    printCellLeftUtf8(lastUseBuf, lastUseTimeColWidth);
-    printf(" |\n");
+    printf("查询关键字：%s\n", keyword);
+    printf("匹配结果数：%zu\n", count);
+    printQueryTableHeader(cardColWidth,
+                          statusColWidth,
+                          balanceColWidth,
+                          totalUseColWidth,
+                          useCountColWidth,
+                          lastUseTimeColWidth);
 
-    printCellRule(cardColWidth + 2);
-    printCellRule(statusColWidth + 2);
-    printCellRule(balanceColWidth + 2);
-    printCellRule(totalUseColWidth + 2);
-    printCellRule(useCountColWidth + 2);
-    printCellRule(lastUseTimeColWidth + 2);
-    printf("+\n");
+    for (index = 0; index < count; index++) {
+        printQueryTableRow(&cards[index],
+                           cardColWidth,
+                           statusColWidth,
+                           balanceColWidth,
+                           totalUseColWidth,
+                           useCountColWidth,
+                           lastUseTimeColWidth);
+    }
+
+    printQueryTableFooter(cardColWidth,
+                          statusColWidth,
+                          balanceColWidth,
+                          totalUseColWidth,
+                          useCountColWidth,
+                          lastUseTimeColWidth);
 }

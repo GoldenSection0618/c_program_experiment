@@ -40,22 +40,53 @@ static void handleAddCard(void)
 
 static void handleQueryCard(void)
 {
-    char cardName[INPUT_BUF_SIZE];
+    char queryText[INPUT_BUF_SIZE];
     Card card;
+    CardQueryList queryList;
+    int queryMode = 0;
     BizResult result = BIZ_OK;
 
-    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
-        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+    printf("1. 精确查询\n");
+    printf("2. 模糊查询\n");
+    if (readChoiceInput("请选择查询方式：", &queryMode) != 0) {
+        printf("查询方式输入格式错误，请输入数字编号（1~2）。\n");
         return;
     }
 
-    result = bizQueryCard(cardName, &card);
-    if (result != BIZ_OK) {
-        printf("%s\n", bizGetMessage(result));
+    switch (queryMode) {
+    case 1:
+        if (readTextInput("请输入卡号（1~18位）：", queryText, sizeof(queryText)) != 0) {
+            printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+            return;
+        }
+
+        result = bizQueryCard(queryText, &card);
+        if (result != BIZ_OK) {
+            printf("%s\n", bizGetMessage(result));
+            return;
+        }
+
+        viewShowQueryCardDetails(&card);
+        break;
+    case 2:
+        if (readTextInput("请输入查询关键字（1~18位）：", queryText, sizeof(queryText)) != 0) {
+            printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+            return;
+        }
+
+        result = bizFuzzyQueryCards(queryText, &queryList);
+        if (result != BIZ_OK) {
+            printf("%s\n", bizGetMessage(result));
+            return;
+        }
+
+        viewShowFuzzyQueryResults(queryText, queryList.items, queryList.count);
+        bizFreeCardQueryList(&queryList);
+        break;
+    default:
+        printf("无效查询方式，请输入 1~2。\n");
         return;
     }
-
-    viewShowQueryCardDetails(&card);
 }
 
 static void handleMenuChoice(int choice)

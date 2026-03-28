@@ -1,6 +1,7 @@
 #ifndef BUSINESS_H
 #define BUSINESS_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "model.h"
@@ -18,11 +19,19 @@ typedef enum BizResult {
     BIZ_ERR_RECORD_FORMAT = -9,
     BIZ_ERR_TIME_PARSE = -10,
     BIZ_ERR_NO_MEMORY = -11,
-    BIZ_ERR_SYSTEM = -12
+    BIZ_ERR_SYSTEM = -12,
+    BIZ_ERR_NO_MATCHED_CARD = -13
 } BizResult;
+
+typedef struct CardQueryList {
+    Card *items;
+    size_t count;
+} CardQueryList;
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);
 BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard);
+BizResult bizFuzzyQueryCards(const char *keywordInput, CardQueryList *resultList);
+void bizFreeCardQueryList(CardQueryList *resultList);
 const char *bizGetMessage(BizResult result);
 void bizStartBilling(void);
 void bizStopBilling(void);

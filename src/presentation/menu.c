@@ -55,7 +55,7 @@ void outputMenu(void)
     printf("0. 退出系统\n");
 }
 
-int readMenuChoice(int *choice)
+int readChoiceInput(const char *prompt, int *choice)
 {
     char buffer[INPUT_BUF_SIZE];
     char *endptr = NULL;
@@ -65,7 +65,7 @@ int readMenuChoice(int *choice)
         return -1;
     }
 
-    if (readTextInput("请输入菜单编号：", buffer, sizeof(buffer)) != 0) {
+    if (readTextInput(prompt, buffer, sizeof(buffer)) != 0) {
         return -1;
     }
 
@@ -90,4 +90,9 @@ int readMenuChoice(int *choice)
 
     *choice = (int)value;
     return 0;
+}
+
+int readMenuChoice(int *choice)
+{
+    return readChoiceInput("请输入菜单编号：", choice);
 }

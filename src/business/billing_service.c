@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -300,6 +301,63 @@ BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
     return BIZ_OK;
 }
 
+BizResult bizFuzzyQueryCards(const char *keywordInput, CardQueryList *resultList)
+{
+    char keyword[INPUT_BUF_SIZE];
+    size_t count = 0;
+    size_t copied = 0;
+    int readResult = 0;
+    Card *cards = NULL;
+
+    if (resultList == NULL) {
+        return BIZ_ERR_SYSTEM;
+    }
+
+    resultList->items = NULL;
+    resultList->count = 0;
+
+    if (normalizeInput(keywordInput, keyword, sizeof(keyword)) != 0 || !isValidCardName(keyword)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    readResult = readCard();
+    if (readResult < 0) {
+        return mapDataResult((DataResult)readResult);
+    }
+
+    count = dataCountCardsByKeyword(keyword);
+    if (count == 0) {
+        return BIZ_ERR_NO_MATCHED_CARD;
+    }
+
+    cards = (Card *)malloc(count * sizeof(Card));
+    if (cards == NULL) {
+        return BIZ_ERR_NO_MEMORY;
+    }
+
+    copied = dataCopyCardsByKeyword(keyword, cards, count);
+    if (copied != count) {
+        free(cards);
+        return BIZ_ERR_SYSTEM;
+    }
+
+    logOperation("模糊查询");
+    resultList->items = cards;
+    resultList->count = count;
+    return BIZ_OK;
+}
+
+void bizFreeCardQueryList(CardQueryList *resultList)
+{
+    if (resultList == NULL) {
+        return;
+    }
+
+    free(resultList->items);
+    resultList->items = NULL;
+    resultList->count = 0;
+}
+
 const char *bizGetMessage(BizResult result)
 {
     switch (result) {
@@ -317,6 +375,8 @@ const char *bizGetMessage(BizResult result)
         return "卡号已存在，不能重复添加！";
     case BIZ_ERR_CARD_NOT_FOUND:
         return "没有该卡的信息！";
+    case BIZ_ERR_NO_MATCHED_CARD:
+        return "没有符合关键字的卡信息！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:

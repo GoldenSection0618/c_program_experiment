@@ -19,6 +19,8 @@ typedef enum DataResult {
 
 int dataAddCard(const Card *card);
 const Card *dataFindCardByName(const char *cardName);
+size_t dataCountCardsByKeyword(const char *keyword);
+size_t dataCopyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity);
 DataResult dataDeleteCardByName(const char *cardName);
 DataResult saveCard(const Card *card);
 int readCard(void);

@@ -22,6 +22,7 @@ static void formatTimeString(time_t value, char *buffer, size_t size);
 static int parseIntField(const char *text, int *value);
 static int parseInt32Field(const char *text, int32_t *value);
 static int isCardNameEqual(const char *a, const char *b);
+static int doesCardNameContainKeyword(const char *cardName, const char *keyword);
 static CardNode *findCardNodeByName(const char *cardName);
 
 static int isCardNameEqual(const char *a, const char *b)
@@ -30,6 +31,15 @@ static int isCardNameEqual(const char *a, const char *b)
         return 0;
     }
     return strcmp(a, b) == 0;
+}
+
+static int doesCardNameContainKeyword(const char *cardName, const char *keyword)
+{
+    if (cardName == NULL || keyword == NULL || *keyword == '\0') {
+        return 0;
+    }
+
+    return strstr(cardName, keyword) != NULL;
 }
 
 static CardNode *findCardNodeByName(const char *cardName)
@@ -327,6 +337,47 @@ const Card *dataFindCardByName(const char *cardName)
         return NULL;
     }
     return &pNode->cardData;
+}
+
+size_t dataCountCardsByKeyword(const char *keyword)
+{
+    CardNode *pCurrent = g_pCardListHead;
+    size_t count = 0;
+
+    if (keyword == NULL || *keyword == '\0') {
+        return 0;
+    }
+
+    while (pCurrent != NULL) {
+        if (pCurrent->cardData.nDel == 0 &&
+            doesCardNameContainKeyword(pCurrent->cardData.aCardName, keyword)) {
+            count++;
+        }
+        pCurrent = pCurrent->pNext;
+    }
+
+    return count;
+}
+
+size_t dataCopyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity)
+{
+    CardNode *pCurrent = g_pCardListHead;
+    size_t count = 0;
+
+    if (keyword == NULL || *keyword == '\0' || outCards == NULL || capacity == 0) {
+        return 0;
+    }
+
+    while (pCurrent != NULL && count < capacity) {
+        if (pCurrent->cardData.nDel == 0 &&
+            doesCardNameContainKeyword(pCurrent->cardData.aCardName, keyword)) {
+            outCards[count] = pCurrent->cardData;
+            count++;
+        }
+        pCurrent = pCurrent->pNext;
+    }
+
+    return count;
 }
 
 DataResult dataDeleteCardByName(const char *cardName)

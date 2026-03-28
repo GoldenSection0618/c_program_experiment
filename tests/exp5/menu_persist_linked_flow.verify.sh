@@ -7,6 +7,7 @@ query_output="build/exp5_persist_query.out"
 
 cat > "$query_input" <<'EOD'
 2
+1
 persistL1
 0
 EOD
