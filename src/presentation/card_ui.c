@@ -106,3 +106,30 @@ void handleQueryCardInteraction(void)
         return;
     }
 }
+
+void handleStartBillingInteraction(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    LogonInfo logonInfo;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    if (readTextInput("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_PASSWORD));
+        return;
+    }
+
+    result = bizStartBilling(cardName, password, &logonInfo);
+    if (result != BIZ_OK) {
+        printf("%s\n", bizGetMessage(result));
+        return;
+    }
+
+    printf("上机成功！\n");
+    viewShowLogonInfo(&logonInfo);
+}

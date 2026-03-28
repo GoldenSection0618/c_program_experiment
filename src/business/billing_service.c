@@ -1,4 +1,6 @@
 #include "business.h"
+#include "billing_repository.h"
+#include "billing_storage_file.h"
 #include "card_repository.h"
 #include "card_storage_file.h"
 #include "card_validator.h"
@@ -48,6 +50,11 @@ static BizResult prepareFuzzyQueryKeyword(const char *keywordInput,
     }
 
     return BIZ_OK;
+}
+
+static int isStartBillingAllowedStatus(int status)
+{
+    return status == CARD_STATUS_OFFLINE;
 }
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
@@ -213,6 +220,12 @@ const char *bizGetMessage(BizResult result)
         return "没有该卡的信息！";
     case BIZ_ERR_NO_MATCHED_CARD:
         return "没有符合关键字的卡信息！";
+    case BIZ_ERR_WRONG_PASSWORD:
+        return "密码错误！";
+    case BIZ_ERR_CARD_UNAVAILABLE:
+        return "该卡正在使用或已注销，不能上机！";
+    case BIZ_ERR_BALANCE_NOT_ENOUGH:
+        return "余额不足，不能上机！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
@@ -228,10 +241,92 @@ const char *bizGetMessage(BizResult result)
     }
 }
 
-void bizStartBilling(void)
+BizResult bizStartBilling(const char *cardNameInput, const char *passwordInput, LogonInfo *logonInfo)
 {
-    printf("[业务逻辑层] 上机计费功能入口。\n");
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    int cardLoadResult = 0;
+    int billingLoadResult = 0;
+    const Card *card = NULL;
+    Card updatedCard;
+    Card originalCard;
+    Billing billing;
+    DataResult dataResult = DATA_OK;
+    time_t now = 0;
+
+    if (validatorNormalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 ||
+        !validatorIsValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    if (validatorNormalizeInput(passwordInput, password, sizeof(password)) != 0 ||
+        !validatorIsValidPassword(password)) {
+        return BIZ_ERR_INVALID_PASSWORD;
+    }
+
+    cardLoadResult = dataLoadCards();
+    if (cardLoadResult < 0) {
+        return mapDataResult((DataResult)cardLoadResult);
+    }
+
+    billingLoadResult = dataLoadBillings();
+    if (billingLoadResult < 0 && billingLoadResult != DATA_ERR_FILE_NOT_FOUND) {
+        return mapDataResult((DataResult)billingLoadResult);
+    }
+
+    card = dataQueryCardByName(cardName);
+    if (card == NULL) {
+        return BIZ_ERR_CARD_NOT_FOUND;
+    }
+    if (card->nDel != 0) {
+        return BIZ_ERR_CARD_NOT_FOUND;
+    }
+    if (strcmp(card->aPwd, password) != 0) {
+        return BIZ_ERR_WRONG_PASSWORD;
+    }
+    if (!isStartBillingAllowedStatus(card->nStatus)) {
+        return BIZ_ERR_CARD_UNAVAILABLE;
+    }
+    if (card->nBalanceCent < 0) {
+        return BIZ_ERR_BALANCE_NOT_ENOUGH;
+    }
+
+    originalCard = *card;
+    updatedCard = *card;
+    now = time(NULL);
+    updatedCard.nStatus = CARD_STATUS_ONLINE;
+
+    dataResult = dataUpdateCard(&updatedCard);
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
+    }
+
+    memset(&billing, 0, sizeof(billing));
+    memcpy(billing.aCardName, updatedCard.aCardName, strlen(updatedCard.aCardName) + 1);
+    billing.tStart = now;
+    billing.tEnd = (time_t)0;
+    billing.nAmountCent = 0;
+    billing.nStatus = 0;
+    billing.nDel = 0;
+
+    dataResult = dataSaveBilling(&billing);
+    if (dataResult != DATA_OK) {
+        if (dataUpdateCard(&originalCard) != DATA_OK) {
+            return BIZ_ERR_SYSTEM;
+        }
+        return mapDataResult(dataResult);
+    }
+
+    if (logonInfo != NULL) {
+        memset(logonInfo, 0, sizeof(*logonInfo));
+        memcpy(logonInfo->aCardName, updatedCard.aCardName, strlen(updatedCard.aCardName) + 1);
+        logonInfo->tStart = now;
+        logonInfo->nStatus = CARD_STATUS_ONLINE;
+        logonInfo->nBalanceCent = updatedCard.nBalanceCent;
+    }
+
     logOperation("上机");
+    return BIZ_OK;
 }
 
 void bizStopBilling(void)
@@ -267,4 +362,5 @@ void bizCancelCard(void)
 void bizShutdown(void)
 {
     dataCleanup();
+    dataCleanupBillings();
 }

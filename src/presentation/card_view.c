@@ -356,3 +356,50 @@ void viewShowFuzzyQueryResults(const char *keyword, const Card *cards, size_t co
                           useCountColWidth,
                           lastUseTimeColWidth);
 }
+
+void viewShowLogonInfo(const LogonInfo *logonInfo)
+{
+    const int cardColWidth = 18;
+    const int balanceColWidth = 10;
+    const int startTimeColWidth = 19;
+    char balanceBuf[32];
+    char startTimeBuf[32];
+
+    if (logonInfo == NULL) {
+        return;
+    }
+
+    formatMoneyFromCent(logonInfo->nBalanceCent, balanceBuf, sizeof(balanceBuf));
+    formatTimeString(logonInfo->tStart, startTimeBuf, sizeof(startTimeBuf));
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("余额", balanceColWidth);
+    printf(" | ");
+    printCellLeftUtf8("上机时间", startTimeColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8(logonInfo->aCardName, cardColWidth);
+    printf(" | ");
+    printCellRightAscii(balanceBuf, balanceColWidth);
+    printf(" | ");
+    printCellLeftUtf8(startTimeBuf, startTimeColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printf("+\n");
+}

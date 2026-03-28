@@ -117,7 +117,7 @@ void dispatchMenuChoice(int choice)
         break;
     case 3:
         printf("你选择了：上机\n");
-        bizStartBilling();
+        handleStartBillingInteraction();
         break;
     case 4:
         printf("你选择了：下机\n");

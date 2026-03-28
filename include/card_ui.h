@@ -3,5 +3,6 @@
 
 void handleAddCardInteraction(void);
 void handleQueryCardInteraction(void);
+void handleStartBillingInteraction(void);
 
 #endif
