@@ -40,3 +40,4 @@ m4/
 
 # Runtime data
 data/cards.txt
+data/card.bin
