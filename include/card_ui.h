@@ -4,5 +4,6 @@
 void handleAddCardInteraction(void);
 void handleQueryCardInteraction(void);
 void handleStartBillingInteraction(void);
+void handleStopBillingInteraction(void);
 
 #endif

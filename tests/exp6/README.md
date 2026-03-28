@@ -6,6 +6,10 @@
 - `menu_start_billing_card_missing`：实验六上机失败验证，覆盖卡不存在场景
 - `menu_start_billing_password_wrong`：实验六上机失败验证，覆盖密码错误场景
 - `menu_start_billing_card_unavailable`：实验六上机失败验证，覆盖卡正在上机或已注销场景
+- `menu_stop_billing_success`：实验六下机成功验证，覆盖菜单 4、卡状态恢复、余额扣减与消费记录结算
+- `menu_stop_billing_no_unsettled`：实验六下机失败验证，覆盖未找到未结算记录场景
+- `menu_stop_billing_balance_not_enough`：实验六下机失败验证，覆盖余额不足场景
+- `menu_stop_billing_password_wrong`：实验六下机失败验证，覆盖密码错误场景
 
 ## 2. 运行方式
 ```bash
@@ -14,7 +18,11 @@ make test LAB=exp6 TEST_SUITE=menu_start_billing_success
 make test LAB=exp6 TEST_SUITE=menu_start_billing_card_missing
 make test LAB=exp6 TEST_SUITE=menu_start_billing_password_wrong
 make test LAB=exp6 TEST_SUITE=menu_start_billing_card_unavailable
+make test LAB=exp6 TEST_SUITE=menu_stop_billing_success
+make test LAB=exp6 TEST_SUITE=menu_stop_billing_no_unsettled
+make test LAB=exp6 TEST_SUITE=menu_stop_billing_balance_not_enough
+make test LAB=exp6 TEST_SUITE=menu_stop_billing_password_wrong
 make test-batch LAB=exp6 TEST_GROUP=acceptance
 ```
 
-当前迭代 2 在消费记录基础设施之上，补齐了菜单 3 的上机业务主流程。
+当前迭代 3 在上机主流程基础上，补齐了菜单 4 的下机结算闭环。

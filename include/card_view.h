@@ -9,5 +9,6 @@ void viewShowCardSummary(const Card *card);
 void viewShowQueryCardDetails(const Card *card);
 void viewShowFuzzyQueryResults(const char *keyword, const Card *cards, size_t count);
 void viewShowLogonInfo(const LogonInfo *logonInfo);
+void viewShowSettleInfo(const SettleInfo *settleInfo);
 
 #endif

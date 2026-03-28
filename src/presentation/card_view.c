@@ -403,3 +403,70 @@ void viewShowLogonInfo(const LogonInfo *logonInfo)
     printCellRule(startTimeColWidth + 2);
     printf("+\n");
 }
+
+void viewShowSettleInfo(const SettleInfo *settleInfo)
+{
+    const int cardColWidth = 18;
+    const int startTimeColWidth = 19;
+    const int endTimeColWidth = 19;
+    const int amountColWidth = 10;
+    const int balanceColWidth = 10;
+    char startTimeBuf[32];
+    char endTimeBuf[32];
+    char amountBuf[32];
+    char balanceBuf[32];
+
+    if (settleInfo == NULL) {
+        return;
+    }
+
+    formatTimeString(settleInfo->tStart, startTimeBuf, sizeof(startTimeBuf));
+    formatTimeString(settleInfo->tEnd, endTimeBuf, sizeof(endTimeBuf));
+    formatMoneyFromCent(settleInfo->nAmountCent, amountBuf, sizeof(amountBuf));
+    formatMoneyFromCent(settleInfo->nBalanceCent, balanceBuf, sizeof(balanceBuf));
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("上机时间", startTimeColWidth);
+    printf(" | ");
+    printCellLeftUtf8("下机时间", endTimeColWidth);
+    printf(" | ");
+    printCellLeftUtf8("消费金额", amountColWidth);
+    printf(" | ");
+    printCellLeftUtf8("余额", balanceColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8(settleInfo->aCardName, cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8(startTimeBuf, startTimeColWidth);
+    printf(" | ");
+    printCellLeftUtf8(endTimeBuf, endTimeColWidth);
+    printf(" | ");
+    printCellRightAscii(amountBuf, amountColWidth);
+    printf(" | ");
+    printCellRightAscii(balanceBuf, balanceColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+}
