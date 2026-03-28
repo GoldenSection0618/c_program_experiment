@@ -38,7 +38,7 @@
    - `dataAddCard()` 在空链表时插入首结点
    - 在非空链表时遍历至尾结点完成尾插
 3. 按卡号查找
-   - `dataFindCardByName()` 可按卡号遍历查找
+   - `dataQueryCardByName()` 可按卡号遍历查找
 4. 删除结点
    - `dataDeleteCardByName()` 支持删除头/中/尾结点
 5. 链表释放与重建

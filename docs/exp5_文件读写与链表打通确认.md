@@ -5,26 +5,26 @@
 
 ## 2. 当前打通主线
 当前仓库中的文件与链表协同关系已经成立：
-- `readCard()`：负责从 `data/cards.txt` 读取全部卡记录，并逐条恢复到链表
-- `saveCard()`：负责将单张卡记录追加写入文件
-- `updateCard()`：负责修改链表节点后重写文件
+- `dataLoadCards()`：负责从 `data/cards.txt` 读取全部卡记录，并逐条恢复到链表
+- `dataSaveCard()`：负责将单张卡记录追加写入文件
+- `dataUpdateCard()`：负责修改链表节点后重写文件
 - `praseCard()` / `stringToTime()`：负责把文本记录恢复为 `Card`
 
 ## 3. 当前业务如何使用这条主线
 ### 3.1 添加卡
 当前 `bizAddCard` 已按以下顺序工作：
 1. 输入标准化与合法性校验
-2. `readCard()` 从文件恢复已有卡数据到链表
-3. `isCardExists()` 做重复卡号校验
+2. `dataLoadCards()` 从文件恢复已有卡数据到链表
+3. `dataCardExists()` 做重复卡号校验
 4. 构造完整 `Card`
 5. `dataAddCard()` 把新卡插入当前链表
-6. `saveCard()` 把新卡写入文件
-7. 若落盘失败，则通过再次 `readCard()` 回滚内存状态
+6. `dataSaveCard()` 把新卡写入文件
+7. 若落盘失败，则通过再次 `dataLoadCards()` 回滚内存状态
 
 ### 3.2 查询卡
 当前 `bizQueryCard` 已按以下顺序工作：
-1. `readCard()` 从文件恢复链表
-2. `dataFindCardByName()` 在链表中做精确查找
+1. `dataLoadCards()` 从文件恢复链表
+2. `dataQueryCardByName()` 在链表中做精确查找
 3. 返回结果给表示层输出
 
 因此，当前系统已经满足“文件 -> 链表 -> 业务使用”的实验五前置要求。
@@ -47,7 +47,7 @@
 1. 第一次运行通过菜单 1 添加卡并退出
 2. 第二次运行通过菜单 2 查询同一卡号
 3. 查询结果能正常显示，证明程序重启后仍可从文件恢复链表
-4. 通过 `readCard() + dataFindCardByName()` 再次校验文件恢复结果正确
+4. 通过 `dataLoadCards() + dataQueryCardByName()` 再次校验文件恢复结果正确
 
 ## 6. 本轮结论
 Iteration 5.4 的结论是：

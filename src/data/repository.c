@@ -24,6 +24,8 @@ static int parseInt32Field(const char *text, int32_t *value);
 static int isCardNameEqual(const char *a, const char *b);
 static int doesCardNameContainKeyword(const char *cardName, const char *keyword);
 static CardNode *findCardNodeByName(const char *cardName);
+static size_t countCardsByKeyword(const char *keyword);
+static size_t copyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity);
 
 static int isCardNameEqual(const char *a, const char *b)
 {
@@ -329,7 +331,7 @@ static DataResult rewriteCardFile(void)
     return DATA_OK;
 }
 
-const Card *dataFindCardByName(const char *cardName)
+const Card *dataQueryCardByName(const char *cardName)
 {
     CardNode *pNode = findCardNodeByName(cardName);
 
@@ -339,7 +341,7 @@ const Card *dataFindCardByName(const char *cardName)
     return &pNode->cardData;
 }
 
-size_t dataCountCardsByKeyword(const char *keyword)
+static size_t countCardsByKeyword(const char *keyword)
 {
     CardNode *pCurrent = g_pCardListHead;
     size_t count = 0;
@@ -359,7 +361,7 @@ size_t dataCountCardsByKeyword(const char *keyword)
     return count;
 }
 
-size_t dataCopyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity)
+static size_t copyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity)
 {
     CardNode *pCurrent = g_pCardListHead;
     size_t count = 0;
@@ -446,7 +448,7 @@ int dataAddCard(const Card *card)
     return DATA_OK;
 }
 
-DataResult saveCard(const Card *card)
+DataResult dataSaveCard(const Card *card)
 {
     FILE *fp = NULL;
     char startBuf[CARD_TIME_STR_LEN + 1];
@@ -495,7 +497,7 @@ DataResult saveCard(const Card *card)
     return DATA_OK;
 }
 
-int readCard(void)
+int dataLoadCards(void)
 {
     FILE *fp = NULL;
     char line[256];
@@ -551,7 +553,7 @@ int readCard(void)
     return count;
 }
 
-int getCardCount(void)
+int dataGetCardCount(void)
 {
     FILE *fp = NULL;
     char line[256];
@@ -594,7 +596,7 @@ int getCardCount(void)
     return count;
 }
 
-int isCardExists(const char *cardName)
+int dataCardExists(const char *cardName)
 {
     if (cardName == NULL || *cardName == '\0') {
         return 0;
@@ -603,7 +605,7 @@ int isCardExists(const char *cardName)
     return findCardNodeByName(cardName) != NULL;
 }
 
-DataResult updateCard(const Card *card)
+DataResult dataUpdateCard(const Card *card)
 {
     CardNode *pNode = NULL;
     int readResult = 0;
@@ -612,7 +614,7 @@ DataResult updateCard(const Card *card)
         return DATA_ERR_INVALID_ARG;
     }
 
-    readResult = readCard();
+    readResult = dataLoadCards();
     if (readResult < 0) {
         return (DataResult)readResult;
     }
@@ -624,6 +626,44 @@ DataResult updateCard(const Card *card)
 
     pNode->cardData = *card;
     return rewriteCardFile();
+}
+
+DataResult dataQueryCardsByKeyword(const char *keyword,
+                                   Card *outCards,
+                                   size_t capacity,
+                                   size_t *actualCount,
+                                   size_t *requiredCount)
+{
+    size_t count = 0;
+
+    if (keyword == NULL || *keyword == '\0' || actualCount == NULL || requiredCount == NULL) {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    *actualCount = 0;
+    *requiredCount = 0;
+
+    count = countCardsByKeyword(keyword);
+    *requiredCount = count;
+
+    if (count == 0) {
+        return DATA_OK;
+    }
+
+    if (outCards == NULL || capacity == 0) {
+        return DATA_OK;
+    }
+
+    if (capacity < count) {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    *actualCount = copyCardsByKeyword(keyword, outCards, capacity);
+    if (*actualCount != count) {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    return DATA_OK;
 }
 
 void dataCleanup(void)

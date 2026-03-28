@@ -8,13 +8,13 @@ int main(void)
     const Card *card = NULL;
     int count = 0;
 
-    count = readCard();
+    count = dataLoadCards();
     if (count != 1) {
         fprintf(stderr, "readCard count mismatch: %d\n", count);
         return 1;
     }
 
-    card = dataFindCardByName("linked01");
+    card = dataQueryCardByName("linked01");
     if (card == NULL) {
         fprintf(stderr, "linked01 not found after add\n");
         return 1;

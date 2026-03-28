@@ -39,7 +39,7 @@ int main(void)
 
     dataCleanup();
 
-    if (dataFindCardByName("missing") != NULL) {
+    if (dataQueryCardByName("missing") != NULL) {
         fprintf(stderr, "missing card unexpectedly found in empty list\n");
         return 1;
     }
@@ -52,7 +52,7 @@ int main(void)
         fprintf(stderr, "add cardA failed\n");
         return 1;
     }
-    if (dataFindCardByName("cardA") == NULL) {
+    if (dataQueryCardByName("cardA") == NULL) {
         fprintf(stderr, "cardA missing after first insert\n");
         return 1;
     }
@@ -63,9 +63,9 @@ int main(void)
         fprintf(stderr, "tail insertion failed\n");
         return 1;
     }
-    if (dataFindCardByName("cardA") == NULL ||
-        dataFindCardByName("cardB") == NULL ||
-        dataFindCardByName("cardC") == NULL) {
+    if (dataQueryCardByName("cardA") == NULL ||
+        dataQueryCardByName("cardB") == NULL ||
+        dataQueryCardByName("cardC") == NULL) {
         fprintf(stderr, "tail insertion lookup failed\n");
         return 1;
     }
@@ -77,11 +77,11 @@ int main(void)
     if (expectDelete("cardA", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("cardA") != NULL) {
+    if (dataQueryCardByName("cardA") != NULL) {
         fprintf(stderr, "cardA still exists after deleting head\n");
         return 1;
     }
-    if (dataFindCardByName("cardB") == NULL || dataFindCardByName("cardC") == NULL) {
+    if (dataQueryCardByName("cardB") == NULL || dataQueryCardByName("cardC") == NULL) {
         fprintf(stderr, "remaining nodes broken after deleting head\n");
         return 1;
     }
@@ -95,11 +95,11 @@ int main(void)
     if (expectDelete("cardC", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("cardC") != NULL) {
+    if (dataQueryCardByName("cardC") != NULL) {
         fprintf(stderr, "cardC still exists after deleting middle node\n");
         return 1;
     }
-    if (dataFindCardByName("cardB") == NULL || dataFindCardByName("cardD") == NULL) {
+    if (dataQueryCardByName("cardB") == NULL || dataQueryCardByName("cardD") == NULL) {
         fprintf(stderr, "remaining nodes broken after deleting middle node\n");
         return 1;
     }
@@ -107,17 +107,17 @@ int main(void)
     if (expectDelete("cardD", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("cardD") != NULL) {
+    if (dataQueryCardByName("cardD") != NULL) {
         fprintf(stderr, "cardD still exists after deleting tail\n");
         return 1;
     }
-    if (dataFindCardByName("cardB") == NULL) {
+    if (dataQueryCardByName("cardB") == NULL) {
         fprintf(stderr, "cardB missing after deleting tail\n");
         return 1;
     }
 
     dataCleanup();
-    if (dataFindCardByName("cardB") != NULL) {
+    if (dataQueryCardByName("cardB") != NULL) {
         fprintf(stderr, "list not cleared by dataCleanup\n");
         return 1;
     }
@@ -127,7 +127,7 @@ int main(void)
         fprintf(stderr, "reinsert after cleanup failed\n");
         return 1;
     }
-    if (dataFindCardByName("afterClear") == NULL) {
+    if (dataQueryCardByName("afterClear") == NULL) {
         fprintf(stderr, "afterClear missing after reinsertion\n");
         return 1;
     }

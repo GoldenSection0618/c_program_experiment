@@ -31,7 +31,7 @@
 
 数据层公共接口见 [data.h](../include/data.h)：
 - `dataAddCard`
-- `dataFindCardByName`
+- `dataQueryCardByName`
 - `dataCleanup`
 
 链表存储实现见 [repository.c](../src/data/repository.c)。

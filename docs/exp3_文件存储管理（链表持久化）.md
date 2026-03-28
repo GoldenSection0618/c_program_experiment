@@ -68,12 +68,12 @@ card001|pass01|0|2026-03-16 16:44:49|2027-03-16 16:44:49|0|2026-03-16 16:44:49|0
 - 空行会被跳过，坏记录会触发错误保护
 
 ## 4. 关键函数职责
-### 4.1 saveCard(const Card *card)
+### 4.1 dataSaveCard(const Card *card)
 - 将一条卡记录按文本格式追加写入 `data/cards.txt`
 - 添加卡成功后用于落盘
 - 文件打开失败时返回错误状态
 
-### 4.2 readCard(void)
+### 4.2 dataLoadCards(void)
 - 先清空当前链表，再从 `data/cards.txt` 逐行读取
 - 每条记录调用 `praseCard()` 解析，再装入链表
 - 文件不存在时返回“文件不存在”状态
@@ -93,29 +93,29 @@ card001|pass01|0|2026-03-16 16:44:49|2027-03-16 16:44:49|0|2026-03-16 16:44:49|0
 ### 4.5 bizAddCard(...)
 - 表示层传入原始输入字符串
 - 业务层完成 trim、长度校验、金额校验
-- 调用 `readCard()` 获取文件最新内容
-- 调用 `isCardExists()` 检查重复卡号
+- 调用 `dataLoadCards()` 获取文件最新内容
+- 调用 `dataCardExists()` 检查重复卡号
 - 构造完整 `Card`
-- 先更新链表，再调用 `saveCard()` 落盘
-- 若落盘失败，调用 `readCard()` 回滚内存状态
+- 先更新链表，再调用 `dataSaveCard()` 落盘
+- 若落盘失败，调用 `dataLoadCards()` 回滚内存状态
 
 ### 4.6 bizQueryCard(...)
 - 表示层传入卡号字符串
-- 业务层先调用 `readCard()` 同步文件数据到链表
-- 再通过 `dataFindCardByName()` 做精确查询
+- 业务层先调用 `dataLoadCards()` 同步文件数据到链表
+- 再通过 `dataQueryCardByName()` 做精确查询
 - 查询成功后交给表示层表格显示
 
 ### 4.7 其他底层能力
-- `getCardCount()`：统计当前文件中的有效卡记录数
-- `isCardExists()`：判断当前加载链表中是否存在卡号
-- `updateCard()`：修改链表节点后重写整个文件，供后续实验复用
+- `dataGetCardCount()`：统计当前文件中的有效卡记录数
+- `dataCardExists()`：判断当前加载链表中是否存在卡号
+- `dataUpdateCard()`：修改链表节点后重写整个文件，供后续实验复用
 
 ## 5. 当前实现如何在链表下完成文件持久化
-1. 相关卡业务开始前，先调用 `readCard()`
-2. `readCard()` 从 `data/cards.txt` 读取文本并恢复链表
-3. 添加卡时，先在链表中做重复校验，再将新卡加入链表并调用 `saveCard()` 追加到文件
+1. 相关卡业务开始前，先调用 `dataLoadCards()`
+2. `dataLoadCards()` 从 `data/cards.txt` 读取文本并恢复链表
+3. 添加卡时，先在链表中做重复校验，再将新卡加入链表并调用 `dataSaveCard()` 追加到文件
 4. 查询卡时，链表数据来自文件最新内容，再做精确匹配
-5. 更新卡时，先改链表节点，再调用 `updateCard()` 重写整个文件
+5. 更新卡时，先改链表节点，再调用 `dataUpdateCard()` 重写整个文件
 6. 程序结束时调用 `dataCleanup()` 释放链表
 
 这意味着：

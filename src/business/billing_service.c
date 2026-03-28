@@ -212,7 +212,7 @@ static BizResult prepareFuzzyQueryKeyword(const char *keywordInput,
         return BIZ_ERR_INVALID_CARD_NAME;
     }
 
-    readResult = readCard();
+    readResult = dataLoadCards();
     if (readResult < 0) {
         return mapDataResult((DataResult)readResult);
     }
@@ -252,12 +252,12 @@ BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const
         return BIZ_ERR_BALANCE_TOO_LARGE;
     }
 
-    readResult = readCard();
+    readResult = dataLoadCards();
     if (readResult < 0 && readResult != DATA_ERR_FILE_NOT_FOUND) {
         return mapDataResult((DataResult)readResult);
     }
 
-    if (isCardExists(cardName)) {
+    if (dataCardExists(cardName)) {
         return BIZ_ERR_DUPLICATE_CARD;
     }
 
@@ -279,9 +279,9 @@ BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const
         return mapDataResult(dataResult);
     }
 
-    dataResult = saveCard(&card);
+    dataResult = dataSaveCard(&card);
     if (dataResult != DATA_OK) {
-        (void)readCard();
+        (void)dataLoadCards();
         return mapDataResult(dataResult);
     }
 
@@ -302,12 +302,12 @@ BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
         return BIZ_ERR_INVALID_CARD_NAME;
     }
 
-    readResult = readCard();
+    readResult = dataLoadCards();
     if (readResult < 0) {
         return mapDataResult((DataResult)readResult);
     }
 
-    card = dataFindCardByName(cardName);
+    card = dataQueryCardByName(cardName);
     if (card == NULL) {
         return BIZ_ERR_CARD_NOT_FOUND;
     }
@@ -336,7 +336,9 @@ BizResult bizCountFuzzyQueryCards(const char *keywordInput, size_t *matchCount)
         return result;
     }
 
-    count = dataCountCardsByKeyword(keyword);
+    if (dataQueryCardsByKeyword(keyword, NULL, 0, &count, &count) != DATA_OK) {
+        return BIZ_ERR_SYSTEM;
+    }
     if (count == 0) {
         return BIZ_ERR_NO_MATCHED_CARD;
     }
@@ -363,7 +365,9 @@ BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t 
         return result;
     }
 
-    count = dataCountCardsByKeyword(keyword);
+    if (dataQueryCardsByKeyword(keyword, NULL, 0, &count, &count) != DATA_OK) {
+        return BIZ_ERR_SYSTEM;
+    }
     if (count == 0) {
         return BIZ_ERR_NO_MATCHED_CARD;
     }
@@ -372,7 +376,9 @@ BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t 
         return BIZ_ERR_SYSTEM;
     }
 
-    copied = dataCopyCardsByKeyword(keyword, buffer, capacity);
+    if (dataQueryCardsByKeyword(keyword, buffer, capacity, &copied, &count) != DATA_OK) {
+        return BIZ_ERR_SYSTEM;
+    }
     if (copied != count) {
         return BIZ_ERR_SYSTEM;
     }

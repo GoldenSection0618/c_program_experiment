@@ -5,16 +5,16 @@
 
 ## 2. 当前精确查询主线
 当前仓库中的精确查询职责已经明确分层：
-- `readCard()`：负责从 `data/cards.txt` 读取全部卡记录，并恢复到链表
+- `dataLoadCards()`：负责从 `data/cards.txt` 读取全部卡记录，并恢复到链表
 - `bizQueryCard()`：负责输入规范化、触发链表恢复、精确查找并返回业务结果
-- `dataFindCardByName()`：负责在链表中逐节点进行卡号精确匹配
+- `dataQueryCardByName()`：负责在链表中逐节点进行卡号精确匹配
 - `viewShowQueryCardDetails()`：负责以列表形式输出查询结果
 
 ## 3. 当前查询流程
 当前菜单 2 已按以下顺序工作：
 1. 读取用户输入卡号
-2. `readCard()` 清空旧链表并从文件重建
-3. `dataFindCardByName()` 做逐节点精确比较
+2. `dataLoadCards()` 清空旧链表并从文件重建
+3. `dataQueryCardByName()` 做逐节点精确比较
 4. 找到则按列表格式展示卡信息
 5. 找不到则输出“没有该卡的信息！”
 

@@ -52,11 +52,11 @@ int main(void)
     if (expectDelete("headCard", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("headCard") != NULL) {
+    if (dataQueryCardByName("headCard") != NULL) {
         fprintf(stderr, "headCard still exists after delete\n");
         return 1;
     }
-    if (dataFindCardByName("midCard") == NULL || dataFindCardByName("tailCard") == NULL) {
+    if (dataQueryCardByName("midCard") == NULL || dataQueryCardByName("tailCard") == NULL) {
         fprintf(stderr, "list broken after deleting head\n");
         return 1;
     }
@@ -64,11 +64,11 @@ int main(void)
     if (expectDelete("tailCard", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("tailCard") != NULL) {
+    if (dataQueryCardByName("tailCard") != NULL) {
         fprintf(stderr, "tailCard still exists after delete\n");
         return 1;
     }
-    if (dataFindCardByName("midCard") == NULL) {
+    if (dataQueryCardByName("midCard") == NULL) {
         fprintf(stderr, "midCard missing after deleting tail\n");
         return 1;
     }
@@ -87,11 +87,11 @@ int main(void)
     if (expectDelete("tailCard2", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("tailCard2") != NULL) {
+    if (dataQueryCardByName("tailCard2") != NULL) {
         fprintf(stderr, "tailCard2 still exists after delete\n");
         return 1;
     }
-    if (dataFindCardByName("midCard") == NULL || dataFindCardByName("tailCard3") == NULL) {
+    if (dataQueryCardByName("midCard") == NULL || dataQueryCardByName("tailCard3") == NULL) {
         fprintf(stderr, "list broken after deleting middle node\n");
         return 1;
     }
@@ -106,7 +106,7 @@ int main(void)
     if (expectDelete("tailCard3", DATA_OK) != 0) {
         return 1;
     }
-    if (dataFindCardByName("midCard") != NULL || dataFindCardByName("tailCard3") != NULL) {
+    if (dataQueryCardByName("midCard") != NULL || dataQueryCardByName("tailCard3") != NULL) {
         fprintf(stderr, "remaining nodes still exist after delete\n");
         return 1;
     }
@@ -119,7 +119,7 @@ int main(void)
         fprintf(stderr, "add afterClear failed\n");
         return 1;
     }
-    if (dataFindCardByName("afterClear") == NULL) {
+    if (dataQueryCardByName("afterClear") == NULL) {
         fprintf(stderr, "afterClear missing after re-add\n");
         return 1;
     }

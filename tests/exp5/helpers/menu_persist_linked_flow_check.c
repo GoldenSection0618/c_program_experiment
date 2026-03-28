@@ -8,13 +8,13 @@ int main(void)
     const Card *card = NULL;
     int count = 0;
 
-    count = readCard();
+    count = dataLoadCards();
     if (count != 1) {
         fprintf(stderr, "readCard count mismatch: %d\n", count);
         return 1;
     }
 
-    card = dataFindCardByName("persistL1");
+    card = dataQueryCardByName("persistL1");
     if (card == NULL) {
         fprintf(stderr, "persistL1 not found after reload\n");
         return 1;

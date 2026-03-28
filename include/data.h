@@ -18,15 +18,18 @@ typedef enum DataResult {
 } DataResult;
 
 int dataAddCard(const Card *card);
-const Card *dataFindCardByName(const char *cardName);
-size_t dataCountCardsByKeyword(const char *keyword);
-size_t dataCopyCardsByKeyword(const char *keyword, Card *outCards, size_t capacity);
 DataResult dataDeleteCardByName(const char *cardName);
-DataResult saveCard(const Card *card);
-int readCard(void);
-int getCardCount(void);
-int isCardExists(const char *cardName);
-DataResult updateCard(const Card *card);
+const Card *dataQueryCardByName(const char *cardName);
+DataResult dataQueryCardsByKeyword(const char *keyword,
+                                   Card *outCards,
+                                   size_t capacity,
+                                   size_t *actualCount,
+                                   size_t *requiredCount);
+DataResult dataSaveCard(const Card *card);
+int dataLoadCards(void);
+int dataGetCardCount(void);
+int dataCardExists(const char *cardName);
+DataResult dataUpdateCard(const Card *card);
 void dataCleanup(void);
 
 #endif

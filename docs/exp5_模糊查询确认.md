@@ -5,10 +5,10 @@
 
 ## 2. 当前模糊查询主线
 当前仓库中的模糊查询职责已经明确分层：
-- `readCard()`：负责从 `data/cards.txt` 读取全部卡记录，并恢复到链表
+- `dataLoadCards()`：负责从 `data/cards.txt` 读取全部卡记录，并恢复到链表
 - `bizCountFuzzyQueryCards()`：负责输入规范化、触发链表恢复，并返回命中数量
 - `bizFillFuzzyQueryCards()`：负责把命中卡复制到调用方提供的缓冲区
-- `dataCountCardsByKeyword()` / `dataCopyCardsByKeyword()`：负责在链表中做“卡号包含关键字”的匹配并复制结果
+- `dataQueryCardsByKeyword()`：负责在链表中做“卡号包含关键字”的匹配，并通过统一仓储接口返回查询结果
 - `card_ui.c`：负责按命中数量申请缓冲区，并在展示后释放
 - `viewShowFuzzyQueryResults()`：负责以表格形式输出全部命中结果
 
@@ -19,7 +19,7 @@
 
 进入模糊查询后，程序按以下顺序工作：
 1. 读取用户输入关键字
-2. `readCard()` 清空旧链表并从文件重建
+2. `dataLoadCards()` 清空旧链表并从文件重建
 3. 统计链表中命中的卡数量
 4. 由表示层按数量申请缓冲区
 5. 把所有命中项复制到调用方缓冲区
