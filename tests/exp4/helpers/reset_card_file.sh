@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-rm -f data/cards.txt
+rm -f data/card.bin
 mkdir -p data

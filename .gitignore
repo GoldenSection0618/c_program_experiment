@@ -39,4 +39,5 @@ m4/
 .vs/
 
 # Runtime data
+data/card.bin
 data/cards.txt

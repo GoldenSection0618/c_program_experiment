@@ -7,7 +7,8 @@ gcc -std=c11 -Wall -Wextra -pedantic -Iinclude \
 
 build/bin/repository_api_check
 
-if ! awk -F'|' 'NR==1 && $1=="cardApi" && $6=="500" && $8=="2" && $9=="20500" {found=1} END {exit found ? 0 : 1}' data/cards.txt; then
-    echo "[verify] updateCard rewrite mismatch" >&2
-    exit 1
-fi
+gcc -std=c11 -Wall -Wextra -pedantic -Iinclude \
+    tests/exp3/helpers/card_bin_check.c src/data/repository.c \
+    -o build/bin/card_bin_check
+
+build/bin/card_bin_check 1 cardApi pwd001 0 500 2 20500

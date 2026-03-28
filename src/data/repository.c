@@ -3,7 +3,6 @@
 #include "common.h"
 
 #include <errno.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,14 +12,8 @@
 static CardNode *g_pCardListHead = NULL;
 static size_t g_cardCount = 0;
 
-static DataResult stringToTime(const char *text, time_t *outTime);
-static DataResult praseCard(const char *line, Card *outCard);
 static DataResult rewriteCardFile(void);
 static DataResult ensureCardDataDir(void);
-static void trimLineEnding(char *text);
-static void formatTimeString(time_t value, char *buffer, size_t size);
-static int parseIntField(const char *text, int *value);
-static int parseInt32Field(const char *text, int32_t *value);
 static int isCardNameEqual(const char *a, const char *b);
 static CardNode *findCardNodeByName(const char *cardName);
 
@@ -50,84 +43,6 @@ static CardNode *findCardNodeByName(const char *cardName)
     return NULL;
 }
 
-static void trimLineEnding(char *text)
-{
-    size_t len = 0;
-
-    if (text == NULL) {
-        return;
-    }
-
-    len = strlen(text);
-    while (len > 0 && (text[len - 1] == '\n' || text[len - 1] == '\r')) {
-        text[len - 1] = '\0';
-        len--;
-    }
-}
-
-static void formatTimeString(time_t value, char *buffer, size_t size)
-{
-    struct tm *localValue = NULL;
-
-    if (buffer == NULL || size == 0) {
-        return;
-    }
-
-    localValue = localtime(&value);
-    if (localValue == NULL) {
-        buffer[0] = '\0';
-        return;
-    }
-
-    if (strftime(buffer, size, "%Y-%m-%d %H:%M:%S", localValue) == 0) {
-        buffer[0] = '\0';
-    }
-}
-
-static int parseIntField(const char *text, int *value)
-{
-    char *endptr = NULL;
-    long parsedValue = 0;
-
-    if (text == NULL || value == NULL || *text == '\0') {
-        return -1;
-    }
-
-    errno = 0;
-    parsedValue = strtol(text, &endptr, 10);
-    if (errno != 0 || endptr == text || *endptr != '\0') {
-        return -1;
-    }
-    if (parsedValue < INT_MIN || parsedValue > INT_MAX) {
-        return -1;
-    }
-
-    *value = (int)parsedValue;
-    return 0;
-}
-
-static int parseInt32Field(const char *text, int32_t *value)
-{
-    char *endptr = NULL;
-    long parsedValue = 0;
-
-    if (text == NULL || value == NULL || *text == '\0') {
-        return -1;
-    }
-
-    errno = 0;
-    parsedValue = strtol(text, &endptr, 10);
-    if (errno != 0 || endptr == text || *endptr != '\0') {
-        return -1;
-    }
-    if (parsedValue < INT32_MIN || parsedValue > INT32_MAX) {
-        return -1;
-    }
-
-    *value = (int32_t)parsedValue;
-    return 0;
-}
-
 static DataResult ensureCardDataDir(void)
 {
     char dirPath[INPUT_BUF_SIZE];
@@ -151,132 +66,10 @@ static DataResult ensureCardDataDir(void)
     return DATA_OK;
 }
 
-static DataResult stringToTime(const char *text, time_t *outTime)
-{
-    int year = 0;
-    int month = 0;
-    int day = 0;
-    int hour = 0;
-    int minute = 0;
-    int second = 0;
-    char tail = '\0';
-    struct tm tmValue;
-    time_t parsedTime = 0;
-
-    if (text == NULL || outTime == NULL) {
-        return DATA_ERR_INVALID_ARG;
-    }
-
-    if (sscanf(text, "%d-%d-%d %d:%d:%d%c", &year, &month, &day, &hour, &minute, &second, &tail) != 6) {
-        return DATA_ERR_TIME_PARSE;
-    }
-
-    memset(&tmValue, 0, sizeof(tmValue));
-    tmValue.tm_year = year - 1900;
-    tmValue.tm_mon = month - 1;
-    tmValue.tm_mday = day;
-    tmValue.tm_hour = hour;
-    tmValue.tm_min = minute;
-    tmValue.tm_sec = second;
-    tmValue.tm_isdst = -1;
-
-    parsedTime = mktime(&tmValue);
-    if (parsedTime == (time_t)-1) {
-        return DATA_ERR_TIME_PARSE;
-    }
-
-    if (tmValue.tm_year != year - 1900 || tmValue.tm_mon != month - 1 || tmValue.tm_mday != day ||
-        tmValue.tm_hour != hour || tmValue.tm_min != minute || tmValue.tm_sec != second) {
-        return DATA_ERR_TIME_PARSE;
-    }
-
-    *outTime = parsedTime;
-    return DATA_OK;
-}
-
-static DataResult praseCard(const char *line, Card *outCard)
-{
-    char buffer[256];
-    char *fields[10];
-    char *cursor = NULL;
-    char *separator = NULL;
-    int index = 0;
-    Card card;
-
-    if (line == NULL || outCard == NULL) {
-        return DATA_ERR_INVALID_ARG;
-    }
-
-    if (snprintf(buffer, sizeof(buffer), "%s", line) >= (int)sizeof(buffer)) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    trimLineEnding(buffer);
-
-    cursor = buffer;
-    for (index = 0; index < 9; index++) {
-        separator = strchr(cursor, '|');
-        if (separator == NULL) {
-            return DATA_ERR_RECORD_FORMAT;
-        }
-        *separator = '\0';
-        fields[index] = cursor;
-        cursor = separator + 1;
-    }
-    fields[9] = cursor;
-
-    if (strchr(fields[9], '|') != NULL) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-
-    for (index = 0; index < 10; index++) {
-        if (fields[index][0] == '\0') {
-            return DATA_ERR_RECORD_FORMAT;
-        }
-    }
-
-    memset(&card, 0, sizeof(card));
-    if (snprintf(card.aCardName, sizeof(card.aCardName), "%s", fields[0]) >= (int)sizeof(card.aCardName)) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (snprintf(card.aPwd, sizeof(card.aPwd), "%s", fields[1]) >= (int)sizeof(card.aPwd)) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (parseIntField(fields[2], &card.nStatus) != 0) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (stringToTime(fields[3], &card.tStart) != DATA_OK) {
-        return DATA_ERR_TIME_PARSE;
-    }
-    if (stringToTime(fields[4], &card.tEnd) != DATA_OK) {
-        return DATA_ERR_TIME_PARSE;
-    }
-    if (parseInt32Field(fields[5], &card.nTotalUseCent) != 0) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (stringToTime(fields[6], &card.tLast) != DATA_OK) {
-        return DATA_ERR_TIME_PARSE;
-    }
-    if (parseIntField(fields[7], &card.nUseCount) != 0) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (parseInt32Field(fields[8], &card.nBalanceCent) != 0) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-    if (parseIntField(fields[9], &card.nDel) != 0) {
-        return DATA_ERR_RECORD_FORMAT;
-    }
-
-    *outCard = card;
-    return DATA_OK;
-}
-
 static DataResult rewriteCardFile(void)
 {
     FILE *fp = NULL;
     CardNode *pCurrent = g_pCardListHead;
-    char startBuf[CARD_TIME_STR_LEN + 1];
-    char endBuf[CARD_TIME_STR_LEN + 1];
-    char lastBuf[CARD_TIME_STR_LEN + 1];
     DataResult ret = DATA_OK;
 
     ret = ensureCardDataDir();
@@ -284,28 +77,13 @@ static DataResult rewriteCardFile(void)
         return ret;
     }
 
-    fp = fopen(CARD_DATA_FILE_PATH, "w");
+    fp = fopen(CARD_DATA_FILE_PATH, "wb");
     if (fp == NULL) {
         return DATA_ERR_FILE_OPEN;
     }
 
     while (pCurrent != NULL) {
-        formatTimeString(pCurrent->cardData.tStart, startBuf, sizeof(startBuf));
-        formatTimeString(pCurrent->cardData.tEnd, endBuf, sizeof(endBuf));
-        formatTimeString(pCurrent->cardData.tLast, lastBuf, sizeof(lastBuf));
-
-        if (fprintf(fp,
-                    "%s|%s|%d|%s|%s|%d|%s|%d|%d|%d\n",
-                    pCurrent->cardData.aCardName,
-                    pCurrent->cardData.aPwd,
-                    pCurrent->cardData.nStatus,
-                    startBuf,
-                    endBuf,
-                    pCurrent->cardData.nTotalUseCent,
-                    lastBuf,
-                    pCurrent->cardData.nUseCount,
-                    pCurrent->cardData.nBalanceCent,
-                    pCurrent->cardData.nDel) < 0) {
+        if (fwrite(&pCurrent->cardData, sizeof(Card), 1, fp) != 1) {
             fclose(fp);
             return DATA_ERR_FILE_OPEN;
         }
@@ -398,9 +176,6 @@ int dataAddCard(const Card *card)
 DataResult saveCard(const Card *card)
 {
     FILE *fp = NULL;
-    char startBuf[CARD_TIME_STR_LEN + 1];
-    char endBuf[CARD_TIME_STR_LEN + 1];
-    char lastBuf[CARD_TIME_STR_LEN + 1];
     DataResult ret = DATA_OK;
 
     if (card == NULL) {
@@ -412,27 +187,12 @@ DataResult saveCard(const Card *card)
         return ret;
     }
 
-    fp = fopen(CARD_DATA_FILE_PATH, "a");
+    fp = fopen(CARD_DATA_FILE_PATH, "ab");
     if (fp == NULL) {
         return DATA_ERR_FILE_OPEN;
     }
 
-    formatTimeString(card->tStart, startBuf, sizeof(startBuf));
-    formatTimeString(card->tEnd, endBuf, sizeof(endBuf));
-    formatTimeString(card->tLast, lastBuf, sizeof(lastBuf));
-
-    if (fprintf(fp,
-                "%s|%s|%d|%s|%s|%d|%s|%d|%d|%d\n",
-                card->aCardName,
-                card->aPwd,
-                card->nStatus,
-                startBuf,
-                endBuf,
-                card->nTotalUseCent,
-                lastBuf,
-                card->nUseCount,
-                card->nBalanceCent,
-                card->nDel) < 0) {
+    if (fwrite(card, sizeof(Card), 1, fp) != 1) {
         fclose(fp);
         return DATA_ERR_FILE_OPEN;
     }
@@ -447,13 +207,11 @@ DataResult saveCard(const Card *card)
 int readCard(void)
 {
     FILE *fp = NULL;
-    char line[256];
     int count = 0;
-    DataResult ret = DATA_OK;
 
     dataCleanup();
 
-    fp = fopen(CARD_DATA_FILE_PATH, "r");
+    fp = fopen(CARD_DATA_FILE_PATH, "rb");
     if (fp == NULL) {
         if (errno == ENOENT) {
             return DATA_ERR_FILE_NOT_FOUND;
@@ -461,35 +219,35 @@ int readCard(void)
         return DATA_ERR_FILE_OPEN;
     }
 
-    while (fgets(line, sizeof(line), fp) != NULL) {
+    while (1) {
         Card card;
+        size_t readBytes = fread(&card, 1, sizeof(Card), fp);
 
-        if (strchr(line, '\n') == NULL && !feof(fp)) {
-            fclose(fp);
-            dataCleanup();
-            return DATA_ERR_RECORD_FORMAT;
-        }
-
-        trimLineEnding(line);
-        if (line[0] == '\0') {
+        if (readBytes == sizeof(Card)) {
+            DataResult ret = (DataResult)dataAddCard(&card);
+            if (ret != DATA_OK) {
+                fclose(fp);
+                dataCleanup();
+                return (ret == DATA_ERR_DUPLICATE) ? DATA_ERR_RECORD_FORMAT : ret;
+            }
+            count++;
             continue;
         }
 
-        ret = praseCard(line, &card);
-        if (ret != DATA_OK) {
-            fclose(fp);
-            dataCleanup();
-            return ret;
+        if (readBytes == 0) {
+            if (feof(fp)) {
+                break;
+            }
+            if (ferror(fp)) {
+                fclose(fp);
+                dataCleanup();
+                return DATA_ERR_FILE_OPEN;
+            }
         }
 
-        ret = (DataResult)dataAddCard(&card);
-        if (ret != DATA_OK) {
-            fclose(fp);
-            dataCleanup();
-            return (ret == DATA_ERR_DUPLICATE) ? DATA_ERR_RECORD_FORMAT : ret;
-        }
-
-        count++;
+        fclose(fp);
+        dataCleanup();
+        return DATA_ERR_RECORD_FORMAT;
     }
 
     if (fclose(fp) != 0) {
@@ -503,10 +261,9 @@ int readCard(void)
 int getCardCount(void)
 {
     FILE *fp = NULL;
-    char line[256];
     int count = 0;
 
-    fp = fopen(CARD_DATA_FILE_PATH, "r");
+    fp = fopen(CARD_DATA_FILE_PATH, "rb");
     if (fp == NULL) {
         if (errno == ENOENT) {
             return 0;
@@ -514,26 +271,27 @@ int getCardCount(void)
         return DATA_ERR_FILE_OPEN;
     }
 
-    while (fgets(line, sizeof(line), fp) != NULL) {
+    while (1) {
         Card card;
-        DataResult ret = DATA_OK;
+        size_t readBytes = fread(&card, 1, sizeof(Card), fp);
 
-        if (strchr(line, '\n') == NULL && !feof(fp)) {
-            fclose(fp);
-            return DATA_ERR_RECORD_FORMAT;
-        }
-
-        trimLineEnding(line);
-        if (line[0] == '\0') {
+        if (readBytes == sizeof(Card)) {
+            count++;
             continue;
         }
 
-        ret = praseCard(line, &card);
-        if (ret != DATA_OK) {
-            fclose(fp);
-            return ret;
+        if (readBytes == 0) {
+            if (feof(fp)) {
+                break;
+            }
+            if (ferror(fp)) {
+                fclose(fp);
+                return DATA_ERR_FILE_OPEN;
+            }
         }
-        count++;
+
+        fclose(fp);
+        return DATA_ERR_RECORD_FORMAT;
     }
 
     if (fclose(fp) != 0) {

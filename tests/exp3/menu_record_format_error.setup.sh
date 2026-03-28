@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
-printf 'broken|record\n' > data/cards.txt
+mkdir -p data
+printf 'broken' > data/card.bin

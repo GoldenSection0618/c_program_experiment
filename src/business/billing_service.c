@@ -194,8 +194,6 @@ static BizResult mapDataResult(DataResult result)
         return BIZ_ERR_FILE_NOT_FOUND;
     case DATA_ERR_RECORD_FORMAT:
         return BIZ_ERR_RECORD_FORMAT;
-    case DATA_ERR_TIME_PARSE:
-        return BIZ_ERR_TIME_PARSE;
     default:
         return BIZ_ERR_SYSTEM;
     }
@@ -322,9 +320,7 @@ const char *bizGetMessage(BizResult result)
     case BIZ_ERR_FILE_NOT_FOUND:
         return "数据文件异常：卡信息文件不存在。";
     case BIZ_ERR_RECORD_FORMAT:
-        return "数据文件内容异常：卡信息文件记录格式错误。";
-    case BIZ_ERR_TIME_PARSE:
-        return "数据文件内容异常：卡信息文件时间字段解析失败。";
+        return "数据文件内容异常：卡信息文件记录损坏或格式不完整。";
     case BIZ_ERR_NO_MEMORY:
         return "系统内存不足，无法继续操作。";
     default:

@@ -59,6 +59,6 @@ make test-batch LAB=exp4 TEST_GROUP=acceptance
 - `readCard`
 - `saveCard`
 - `updateCard`
-- 文件记录格式与时间字段保护
+- 二进制记录格式保护
 
 实验四这里不再把删除验证挂在 `exp3` 目录下，以避免实验目标混淆。

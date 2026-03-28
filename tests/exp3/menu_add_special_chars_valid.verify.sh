@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! awk -F'|' 'NR==1 && NF==10 && $1=="card_001@" && $2=="p_1!" {found=1} END {exit found ? 0 : 1}' data/cards.txt; then
-    echo "[verify] allowed character set was not persisted correctly" >&2
-    exit 1
-fi
+gcc -std=c11 -Wall -Wextra -pedantic -Iinclude \
+    tests/exp3/helpers/card_bin_check.c src/data/repository.c \
+    -o build/bin/card_bin_check
+
+build/bin/card_bin_check 1 card_001@ p_1! 0 0 0 10000

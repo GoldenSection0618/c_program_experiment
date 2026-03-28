@@ -7,8 +7,7 @@
 #define INPUT_BUF_SIZE 128
 #define MENU_MIN 0
 #define MENU_MAX 8
-#define CARD_DATA_FILE_PATH "data/cards.txt"
-#define CARD_TIME_STR_LEN 19
+#define CARD_DATA_FILE_PATH "data/card.bin"
 
 #define ENABLE_LOG 1
 

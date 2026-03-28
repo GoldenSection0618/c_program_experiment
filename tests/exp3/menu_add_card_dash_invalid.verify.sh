@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -f data/cards.txt ] && [ -s data/cards.txt ]; then
+if [ -f data/card.bin ] && [ -s data/card.bin ]; then
     echo "[verify] invalid dash in card name should not persist data" >&2
     exit 1
 fi

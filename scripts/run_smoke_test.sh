@@ -16,15 +16,15 @@ setup_script="${suite_base}.setup.sh"
 verify_script="${suite_base}.verify.sh"
 backup_state_dir="build/test_state"
 backup_name="$(basename "$suite_base")"
-backup_file="${backup_state_dir}/${backup_name}.cards.txt.bak"
-missing_marker="${backup_state_dir}/${backup_name}.cards.txt.missing"
+backup_file="${backup_state_dir}/${backup_name}.card.bin.bak"
+missing_marker="${backup_state_dir}/${backup_name}.card.bin.missing"
 
 restore_cards_file() {
     if [ -f "$backup_file" ]; then
-        mkdir -p "$(dirname data/cards.txt)"
-        mv "$backup_file" data/cards.txt
+        mkdir -p "$(dirname data/card.bin)"
+        mv "$backup_file" data/card.bin
     elif [ -f "$missing_marker" ]; then
-        rm -f data/cards.txt
+        rm -f data/card.bin
     fi
 
     rm -f "$backup_file" "$missing_marker"
@@ -38,8 +38,8 @@ prepare_backup_state() {
     mkdir -p "$backup_state_dir"
     rm -f "$backup_file" "$missing_marker"
 
-    if [ -f data/cards.txt ]; then
-        cp data/cards.txt "$backup_file"
+    if [ -f data/card.bin ]; then
+        cp data/card.bin "$backup_file"
     else
         : > "$missing_marker"
     fi

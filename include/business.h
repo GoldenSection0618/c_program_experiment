@@ -16,9 +16,8 @@ typedef enum BizResult {
     BIZ_ERR_FILE_OPEN = -7,
     BIZ_ERR_FILE_NOT_FOUND = -8,
     BIZ_ERR_RECORD_FORMAT = -9,
-    BIZ_ERR_TIME_PARSE = -10,
-    BIZ_ERR_NO_MEMORY = -11,
-    BIZ_ERR_SYSTEM = -12
+    BIZ_ERR_NO_MEMORY = -10,
+    BIZ_ERR_SYSTEM = -11
 } BizResult;
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);

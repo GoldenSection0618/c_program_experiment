@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 bash "$(dirname "$0")/helpers/reset_card_file.sh"
-: > data/cards.txt
+: > data/card.bin
