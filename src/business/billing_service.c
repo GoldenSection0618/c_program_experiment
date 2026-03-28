@@ -382,7 +382,10 @@ BizResult bizStopBilling(const char *cardNameInput, const char *passwordInput, S
     }
 
     card = dataQueryCardByName(cardName);
-    if (card == NULL || card->nDel != 0) {
+    if (card == NULL) {
+        return BIZ_ERR_CARD_NOT_FOUND;
+    }
+    if (card->nDel != 0) {
         return BIZ_ERR_CARD_NOT_FOUND;
     }
     if (strcmp(card->aPwd, password) != 0) {

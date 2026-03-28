@@ -441,7 +441,7 @@ void viewShowSettleInfo(const SettleInfo *settleInfo)
     printf(" | ");
     printCellLeftUtf8("消费金额", amountColWidth);
     printf(" | ");
-    printCellLeftUtf8("余额", balanceColWidth);
+    printCellLeftUtf8("结算后余额", balanceColWidth);
     printf(" |\n");
 
     printCellRule(cardColWidth + 2);
