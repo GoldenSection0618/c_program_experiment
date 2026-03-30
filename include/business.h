@@ -25,8 +25,11 @@ typedef enum BizResult {
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);
 BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard);
-BizResult bizCountFuzzyQueryCards(const char *keywordInput, size_t *matchCount);
-BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t capacity, size_t *actualCount);
+BizResult bizQueryCardsByKeyword(const char *keywordInput,
+                                 Card *buffer,
+                                 size_t capacity,
+                                 size_t *actualCount,
+                                 size_t *requiredCount);
 const char *bizGetMessage(BizResult result);
 void bizStartBilling(void);
 void bizStopBilling(void);

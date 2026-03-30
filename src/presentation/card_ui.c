@@ -79,7 +79,7 @@ void handleQueryCardInteraction(void)
             return;
         }
 
-        result = bizCountFuzzyQueryCards(queryText, &matchCount);
+        result = bizQueryCardsByKeyword(queryText, NULL, 0, &actualCount, &matchCount);
         if (result != BIZ_OK) {
             printf("%s\n", bizGetMessage(result));
             return;
@@ -91,7 +91,7 @@ void handleQueryCardInteraction(void)
             return;
         }
 
-        result = bizFillFuzzyQueryCards(queryText, cards, matchCount, &actualCount);
+        result = bizQueryCardsByKeyword(queryText, cards, matchCount, &actualCount, &matchCount);
         if (result != BIZ_OK) {
             free(cards);
             printf("%s\n", bizGetMessage(result));

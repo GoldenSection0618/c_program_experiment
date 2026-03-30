@@ -152,67 +152,40 @@ BizResult bizQueryCard(const char *cardNameInput, Card *queriedCard)
     return BIZ_OK;
 }
 
-BizResult bizCountFuzzyQueryCards(const char *keywordInput, size_t *matchCount)
+BizResult bizQueryCardsByKeyword(const char *keywordInput,
+                                 Card *buffer,
+                                 size_t capacity,
+                                 size_t *actualCount,
+                                 size_t *requiredCount)
 {
     char keyword[INPUT_BUF_SIZE];
-    size_t count = 0;
-    BizResult result = BIZ_OK;
-
-    if (matchCount == NULL) {
-        return BIZ_ERR_SYSTEM;
-    }
-
-    *matchCount = 0;
-
-    result = prepareFuzzyQueryKeyword(keywordInput, keyword, sizeof(keyword));
-    if (result != BIZ_OK) {
-        return result;
-    }
-
-    if (dataQueryCardsByKeyword(keyword, NULL, 0, &count, &count) != DATA_OK) {
-        return BIZ_ERR_SYSTEM;
-    }
-    if (count == 0) {
-        return BIZ_ERR_NO_MATCHED_CARD;
-    }
-
-    *matchCount = count;
-    return BIZ_OK;
-}
-
-BizResult bizFillFuzzyQueryCards(const char *keywordInput, Card *buffer, size_t capacity, size_t *actualCount)
-{
-    char keyword[INPUT_BUF_SIZE];
-    size_t count = 0;
     size_t copied = 0;
     BizResult result = BIZ_OK;
 
-    if (buffer == NULL || actualCount == NULL) {
+    if (actualCount == NULL || requiredCount == NULL) {
         return BIZ_ERR_SYSTEM;
     }
 
     *actualCount = 0;
+    *requiredCount = 0;
 
     result = prepareFuzzyQueryKeyword(keywordInput, keyword, sizeof(keyword));
     if (result != BIZ_OK) {
         return result;
     }
 
-    if (dataQueryCardsByKeyword(keyword, NULL, 0, &count, &count) != DATA_OK) {
+    if (dataQueryCardsByKeyword(keyword, buffer, capacity, &copied, requiredCount) != DATA_OK) {
         return BIZ_ERR_SYSTEM;
     }
-    if (count == 0) {
+    if (*requiredCount == 0) {
         return BIZ_ERR_NO_MATCHED_CARD;
     }
 
-    if (capacity < count) {
-        return BIZ_ERR_SYSTEM;
+    if (buffer == NULL || capacity == 0) {
+        return BIZ_OK;
     }
 
-    if (dataQueryCardsByKeyword(keyword, buffer, capacity, &copied, &count) != DATA_OK) {
-        return BIZ_ERR_SYSTEM;
-    }
-    if (copied != count) {
+    if (copied != *requiredCount) {
         return BIZ_ERR_SYSTEM;
     }
 
