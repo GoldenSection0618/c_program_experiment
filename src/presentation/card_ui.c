@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 static const char *getStartBillingMessage(BizResult result)
 {
@@ -29,8 +30,6 @@ static const char *getStopBillingMessage(BizResult result)
     case BIZ_ERR_CARD_NOT_FOUND:
     case BIZ_ERR_WRONG_PASSWORD:
         return "卡号或密码错误！";
-    case BIZ_ERR_BALANCE_NOT_ENOUGH_FOR_STOP:
-        return "余额不足！";
     default:
         return bizGetMessage(result);
     }
@@ -141,6 +140,7 @@ void handleStartBillingInteraction(void)
     char password[INPUT_BUF_SIZE];
     LogonInfo logonInfo;
     BizResult result = BIZ_OK;
+    time_t requestTime = (time_t)0;
 
     if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
         printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
@@ -152,7 +152,8 @@ void handleStartBillingInteraction(void)
         return;
     }
 
-    result = bizStartBilling(cardName, password, &logonInfo);
+    requestTime = time(NULL);
+    result = bizStartBilling(cardName, password, requestTime, &logonInfo);
     if (result != BIZ_OK) {
         printf("上机失败！\n");
         printf("%s\n", getStartBillingMessage(result));
@@ -169,6 +170,7 @@ void handleStopBillingInteraction(void)
     char password[INPUT_BUF_SIZE];
     SettleInfo settleInfo;
     BizResult result = BIZ_OK;
+    time_t requestTime = (time_t)0;
 
     if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
         printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
@@ -180,7 +182,8 @@ void handleStopBillingInteraction(void)
         return;
     }
 
-    result = bizStopBilling(cardName, password, &settleInfo);
+    requestTime = time(NULL);
+    result = bizStopBilling(cardName, password, requestTime, &settleInfo);
     if (result != BIZ_OK) {
         printf("下机失败！\n");
         printf("%s\n", getStopBillingMessage(result));

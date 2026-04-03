@@ -25,8 +25,7 @@ typedef enum BizResult {
     BIZ_ERR_CARD_UNAVAILABLE = -15,
     BIZ_ERR_BALANCE_NOT_ENOUGH = -16,
     BIZ_ERR_NO_UNSETTLED_BILLING = -17,
-    BIZ_ERR_CARD_STATUS_INVALID_FOR_STOP = -18,
-    BIZ_ERR_BALANCE_NOT_ENOUGH_FOR_STOP = -19
+    BIZ_ERR_CARD_STATUS_INVALID_FOR_STOP = -18
 } BizResult;
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);
@@ -37,8 +36,14 @@ BizResult bizQueryCardsByKeyword(const char *keywordInput,
                                  size_t *actualCount,
                                  size_t *requiredCount);
 const char *bizGetMessage(BizResult result);
-BizResult bizStartBilling(const char *cardNameInput, const char *passwordInput, LogonInfo *logonInfo);
-BizResult bizStopBilling(const char *cardNameInput, const char *passwordInput, SettleInfo *settleInfo);
+BizResult bizStartBilling(const char *cardNameInput,
+                          const char *passwordInput,
+                          time_t requestTime,
+                          LogonInfo *logonInfo);
+BizResult bizStopBilling(const char *cardNameInput,
+                         const char *passwordInput,
+                         time_t requestTime,
+                         SettleInfo *settleInfo);
 void bizRecharge(void);
 void bizRefund(void);
 void bizStatistics(void);

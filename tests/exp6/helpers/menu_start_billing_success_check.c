@@ -26,6 +26,10 @@ int main(void)
         fprintf(stderr, "card status mismatch: %d\n", card->nStatus);
         return 1;
     }
+    if (card->tLast == (time_t)0 || card->tLast == card->tStart) {
+        fprintf(stderr, "card last-use time not updated on start billing\n");
+        return 1;
+    }
 
     count = dataLoadBillings();
     if (count != 1) {

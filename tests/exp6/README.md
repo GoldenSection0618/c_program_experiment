@@ -12,7 +12,7 @@
 - `menu_start_billing_billing_save_fail`：实验六上机失败验证，覆盖消费记录写入失败与卡状态回滚
 - `menu_stop_billing_success`：实验六下机成功验证，覆盖菜单 4、卡状态恢复、余额扣减与消费记录结算
 - `menu_stop_billing_no_unsettled`：实验六下机失败验证，覆盖未找到未结算记录场景
-- `menu_stop_billing_balance_not_enough`：实验六下机失败验证，覆盖余额不足场景
+- `menu_stop_billing_balance_not_enough`：实验六下机验证，覆盖允许欠费下机并形成负余额场景
 - `menu_stop_billing_password_wrong`：实验六下机失败验证，覆盖密码错误场景
 - `menu_stop_billing_billing_file_empty`：实验六下机失败验证，覆盖消费记录文件为空场景
 - `menu_stop_billing_multiple_unsettled`：实验六脏数据验证，覆盖同一卡多条未结算记录时优先结算最近一条

@@ -236,8 +236,6 @@ const char *bizGetMessage(BizResult result)
         return "未找到该卡的未结算消费记录！";
     case BIZ_ERR_CARD_STATUS_INVALID_FOR_STOP:
         return "该卡当前不在上机状态，不能下机！";
-    case BIZ_ERR_BALANCE_NOT_ENOUGH_FOR_STOP:
-        return "余额不足，不能下机！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
@@ -253,7 +251,10 @@ const char *bizGetMessage(BizResult result)
     }
 }
 
-BizResult bizStartBilling(const char *cardNameInput, const char *passwordInput, LogonInfo *logonInfo)
+BizResult bizStartBilling(const char *cardNameInput,
+                          const char *passwordInput,
+                          time_t requestTime,
+                          LogonInfo *logonInfo)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
@@ -305,8 +306,12 @@ BizResult bizStartBilling(const char *cardNameInput, const char *passwordInput, 
 
     originalCard = *card;
     updatedCard = *card;
-    now = time(NULL);
+    if (requestTime == (time_t)0) {
+        return BIZ_ERR_SYSTEM;
+    }
+    now = requestTime;
     updatedCard.nStatus = CARD_STATUS_ONLINE;
+    updatedCard.tLast = now;
 
     dataResult = dataUpdateCard(&updatedCard);
     if (dataResult != DATA_OK) {
@@ -341,7 +346,10 @@ BizResult bizStartBilling(const char *cardNameInput, const char *passwordInput, 
     return BIZ_OK;
 }
 
-BizResult bizStopBilling(const char *cardNameInput, const char *passwordInput, SettleInfo *settleInfo)
+BizResult bizStopBilling(const char *cardNameInput,
+                         const char *passwordInput,
+                         time_t requestTime,
+                         SettleInfo *settleInfo)
 {
     char cardName[INPUT_BUF_SIZE];
     char password[INPUT_BUF_SIZE];
@@ -400,14 +408,13 @@ BizResult bizStopBilling(const char *cardNameInput, const char *passwordInput, S
         return BIZ_ERR_NO_UNSETTLED_BILLING;
     }
 
-    now = time(NULL);
+    if (requestTime == (time_t)0) {
+        return BIZ_ERR_SYSTEM;
+    }
+    now = requestTime;
     rate = billingRuleGetDefaultRate();
     if (billingRuleCalculateAmount(billing->tStart, now, &rate, &durationMinutes, &amountCent) != 0) {
         return BIZ_ERR_SYSTEM;
-    }
-
-    if (card->nBalanceCent < amountCent) {
-        return BIZ_ERR_BALANCE_NOT_ENOUGH_FOR_STOP;
     }
 
     originalCard = *card;
