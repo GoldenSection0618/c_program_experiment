@@ -470,3 +470,50 @@ void viewShowSettleInfo(const SettleInfo *settleInfo)
     printCellRule(balanceColWidth + 2);
     printf("+\n");
 }
+
+void viewShowRechargeInfo(const Card *card, int32_t rechargeAmountCent)
+{
+    const int cardColWidth = 18;
+    const int amountColWidth = 10;
+    const int balanceColWidth = 10;
+    char amountBuf[32];
+    char balanceBuf[32];
+
+    if (card == NULL) {
+        return;
+    }
+
+    formatMoneyFromCent(rechargeAmountCent, amountBuf, sizeof(amountBuf));
+    formatMoneyFromCent(card->nBalanceCent, balanceBuf, sizeof(balanceBuf));
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("充值金额", amountColWidth);
+    printf(" | ");
+    printCellLeftUtf8("当前余额", balanceColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8(card->aCardName, cardColWidth);
+    printf(" | ");
+    printCellRightAscii(amountBuf, amountColWidth);
+    printf(" | ");
+    printCellRightAscii(balanceBuf, balanceColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(balanceColWidth + 2);
+    printf("+\n");
+}

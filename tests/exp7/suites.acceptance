@@ -1,1 +1,7 @@
 money_repository_api
+menu_recharge_success
+menu_recharge_online_success
+menu_recharge_card_missing
+menu_recharge_password_wrong
+menu_recharge_card_canceled
+menu_recharge_amount_invalid

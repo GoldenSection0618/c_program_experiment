@@ -6,6 +6,7 @@
 #include "card_storage_file.h"
 #include "card_validator.h"
 #include "common.h"
+#include "money_storage_file.h"
 #include "operation_log.h"
 
 #include <stdio.h>
@@ -238,6 +239,8 @@ const char *bizGetMessage(BizResult result)
         return "未找到该卡的未结算消费记录！";
     case BIZ_ERR_CARD_STATUS_INVALID_FOR_STOP:
         return "该卡当前不在上机状态，不能下机！";
+    case BIZ_ERR_CARD_CANCELED_FOR_RECHARGE:
+        return "已注销卡不能充值！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
@@ -462,10 +465,99 @@ BizResult bizStopBilling(const char *cardNameInput,
     return BIZ_OK;
 }
 
-void bizRecharge(void)
+BizResult bizRecharge(const char *cardNameInput,
+                      const char *passwordInput,
+                      const char *amountInput,
+                      Money *rechargeRecord,
+                      Card *updatedCard)
 {
-    printf("[业务逻辑层] 充值功能入口。\n");
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    char amountText[INPUT_BUF_SIZE];
+    const Card *card = NULL;
+    Card originalCard;
+    Card rechargedCard;
+    Money money = {0};
+    int cardLoadResult = 0;
+    int32_t amountCent = 0;
+    MoneyParseResult moneyParseResult = MONEY_PARSE_OK;
+    DataResult dataResult = DATA_OK;
+    time_t now = 0;
+
+    if (validatorNormalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 ||
+        !validatorIsValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    if (validatorNormalizeInput(passwordInput, password, sizeof(password)) != 0 ||
+        !validatorIsValidPassword(password)) {
+        return BIZ_ERR_INVALID_PASSWORD;
+    }
+
+    if (validatorNormalizeInput(amountInput, amountText, sizeof(amountText)) != 0) {
+        return BIZ_ERR_INVALID_AMOUNT;
+    }
+
+    moneyParseResult = validatorParseMoneyToCent(amountText, &amountCent);
+    if (moneyParseResult == MONEY_PARSE_INVALID || amountCent <= 0) {
+        return BIZ_ERR_INVALID_AMOUNT;
+    }
+    if (moneyParseResult == MONEY_PARSE_TOO_LARGE) {
+        return BIZ_ERR_BALANCE_TOO_LARGE;
+    }
+
+    cardLoadResult = dataLoadCards();
+    if (cardLoadResult < 0) {
+        return mapDataResult((DataResult)cardLoadResult);
+    }
+
+    card = dataQueryCardByName(cardName);
+    if (card == NULL || card->nDel != 0) {
+        return BIZ_ERR_CARD_NOT_FOUND;
+    }
+    if (strcmp(card->aPwd, password) != 0) {
+        return BIZ_ERR_WRONG_PASSWORD;
+    }
+    if (card->nStatus == CARD_STATUS_CANCELED) {
+        return BIZ_ERR_CARD_CANCELED_FOR_RECHARGE;
+    }
+    if ((int64_t)card->nBalanceCent + amountCent >= MAX_BALANCE_CENT) {
+        return BIZ_ERR_BALANCE_TOO_LARGE;
+    }
+
+    originalCard = *card;
+    rechargedCard = *card;
+    now = time(NULL);
+    rechargedCard.nBalanceCent += amountCent;
+
+    snprintf(money.aCardName, sizeof(money.aCardName), "%s", rechargedCard.aCardName);
+    money.tTime = now;
+    money.nStatus = 0;
+    money.nMoneyCent = amountCent;
+    money.nDel = 0;
+
+    dataResult = dataUpdateCard(&rechargedCard);
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
+    }
+
+    dataResult = dataSaveMoney(&money);
+    if (dataResult != DATA_OK) {
+        if (dataUpdateCard(&originalCard) != DATA_OK) {
+            return BIZ_ERR_SYSTEM;
+        }
+        return mapDataResult(dataResult);
+    }
+
+    if (rechargeRecord != NULL) {
+        *rechargeRecord = money;
+    }
+    if (updatedCard != NULL) {
+        *updatedCard = rechargedCard;
+    }
+
     logOperation("充值");
+    return BIZ_OK;
 }
 
 void bizRefund(void)
@@ -490,4 +582,5 @@ void bizShutdown(void)
 {
     dataCleanup();
     dataCleanupBillings();
+    dataCleanupMoneys();
 }

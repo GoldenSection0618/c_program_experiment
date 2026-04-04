@@ -125,7 +125,7 @@ void dispatchMenuChoice(int choice)
         break;
     case 5:
         printf("你选择了：充值\n");
-        bizRecharge();
+        handleRechargeInteraction();
         break;
     case 6:
         printf("你选择了：退费\n");

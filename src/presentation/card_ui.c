@@ -37,6 +37,17 @@ static const char *getStopBillingMessage(BizResult result)
     }
 }
 
+static const char *getRechargeMessage(BizResult result)
+{
+    switch (result) {
+    case BIZ_ERR_CARD_NOT_FOUND:
+    case BIZ_ERR_WRONG_PASSWORD:
+        return "卡号或密码错误！";
+    default:
+        return bizGetMessage(result);
+    }
+}
+
 void handleAddCardInteraction(void)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -194,4 +205,39 @@ void handleStopBillingInteraction(void)
 
     printf("下机成功！\n");
     viewShowSettleInfo(&settleInfo);
+}
+
+void handleRechargeInteraction(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    char amountText[INPUT_BUF_SIZE];
+    Money rechargeRecord;
+    Card updatedCard;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    if (readTextInput("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_PASSWORD));
+        return;
+    }
+
+    if (readTextInput("请输入充值金额（元）：", amountText, sizeof(amountText)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_AMOUNT));
+        return;
+    }
+
+    result = bizRecharge(cardName, password, amountText, &rechargeRecord, &updatedCard);
+    if (result != BIZ_OK) {
+        printf("充值失败！\n");
+        printf("%s\n", getRechargeMessage(result));
+        return;
+    }
+
+    printf("充值成功！\n");
+    viewShowRechargeInfo(&updatedCard, rechargeRecord.nMoneyCent);
 }
