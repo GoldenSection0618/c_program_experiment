@@ -20,6 +20,8 @@ backup_file="${backup_state_dir}/${backup_name}.cards.txt.bak"
 missing_marker="${backup_state_dir}/${backup_name}.cards.txt.missing"
 billing_backup_file="${backup_state_dir}/${backup_name}.billings.txt.bak"
 billing_missing_marker="${backup_state_dir}/${backup_name}.billings.txt.missing"
+money_backup_file="${backup_state_dir}/${backup_name}.money.txt.bak"
+money_missing_marker="${backup_state_dir}/${backup_name}.money.txt.missing"
 
 restore_cards_file() {
     if [ -f "$backup_file" ]; then
@@ -43,9 +45,21 @@ restore_billings_file() {
     rm -f "$billing_backup_file" "$billing_missing_marker"
 }
 
+restore_money_file() {
+    if [ -f "$money_backup_file" ]; then
+        mkdir -p "$(dirname data/money.txt)"
+        mv "$money_backup_file" data/money.txt
+    elif [ -f "$money_missing_marker" ]; then
+        rm -f data/money.txt
+    fi
+
+    rm -f "$money_backup_file" "$money_missing_marker"
+}
+
 cleanup() {
     restore_cards_file
     restore_billings_file
+    restore_money_file
 }
 
 prepare_backup_state() {
@@ -62,6 +76,13 @@ prepare_backup_state() {
         cp data/billings.txt "$billing_backup_file"
     else
         : > "$billing_missing_marker"
+    fi
+
+    rm -f "$money_backup_file" "$money_missing_marker"
+    if [ -f data/money.txt ]; then
+        cp data/money.txt "$money_backup_file"
+    else
+        : > "$money_missing_marker"
     fi
 }
 
