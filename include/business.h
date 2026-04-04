@@ -27,7 +27,9 @@ typedef enum BizResult {
     BIZ_ERR_NO_UNSETTLED_BILLING = -17,
     BIZ_ERR_CARD_STATUS_INVALID_FOR_STOP = -18,
     BIZ_ERR_CARD_CANCELED_FOR_START = -19,
-    BIZ_ERR_CARD_CANCELED_FOR_RECHARGE = -20
+    BIZ_ERR_CARD_CANCELED_FOR_RECHARGE = -20,
+    BIZ_ERR_CARD_CANCELED_FOR_REFUND = -21,
+    BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND = -22
 } BizResult;
 
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard);
@@ -51,7 +53,10 @@ BizResult bizRecharge(const char *cardNameInput,
                       const char *amountInput,
                       Money *rechargeRecord,
                       Card *updatedCard);
-void bizRefund(void);
+BizResult bizRefund(const char *cardNameInput,
+                    const char *passwordInput,
+                    Money *refundRecord,
+                    Card *updatedCard);
 void bizStatistics(void);
 void bizCancelCard(void);
 void bizShutdown(void);

@@ -5,3 +5,9 @@ menu_recharge_card_missing
 menu_recharge_password_wrong
 menu_recharge_card_canceled
 menu_recharge_amount_invalid
+menu_refund_success
+menu_refund_card_online
+menu_refund_balance_zero
+menu_refund_card_missing
+menu_refund_password_wrong
+menu_refund_card_canceled

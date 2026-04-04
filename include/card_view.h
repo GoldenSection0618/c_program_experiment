@@ -11,5 +11,6 @@ void viewShowFuzzyQueryResults(const char *keyword, const Card *cards, size_t co
 void viewShowLogonInfo(const LogonInfo *logonInfo);
 void viewShowSettleInfo(const SettleInfo *settleInfo);
 void viewShowRechargeInfo(const Card *card, int32_t rechargeAmountCent);
+void viewShowRefundInfo(const Card *card, int32_t refundAmountCent);
 
 #endif

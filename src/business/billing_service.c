@@ -64,6 +64,11 @@ static int isStopBillingAllowedStatus(int status)
     return status == CARD_STATUS_ONLINE;
 }
 
+static int isRefundAllowedStatus(int status)
+{
+    return status == CARD_STATUS_OFFLINE;
+}
+
 BizResult bizAddCard(const char *cardNameInput, const char *passwordInput, const char *amountInput, Card *createdCard)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -241,6 +246,10 @@ const char *bizGetMessage(BizResult result)
         return "该卡当前不在上机状态，不能下机！";
     case BIZ_ERR_CARD_CANCELED_FOR_RECHARGE:
         return "已注销卡不能充值！";
+    case BIZ_ERR_CARD_CANCELED_FOR_REFUND:
+        return "已注销卡不能退费！";
+    case BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND:
+        return "该卡正在上机，不能退费！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
@@ -560,10 +569,88 @@ BizResult bizRecharge(const char *cardNameInput,
     return BIZ_OK;
 }
 
-void bizRefund(void)
+BizResult bizRefund(const char *cardNameInput,
+                    const char *passwordInput,
+                    Money *refundRecord,
+                    Card *updatedCard)
 {
-    printf("[业务逻辑层] 退费功能入口。\n");
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    const Card *card = NULL;
+    Card originalCard;
+    Card refundedCard;
+    Money money = {0};
+    int cardLoadResult = 0;
+    int32_t refundAmountCent = 0;
+    DataResult dataResult = DATA_OK;
+    time_t now = 0;
+
+    if (validatorNormalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 ||
+        !validatorIsValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    if (validatorNormalizeInput(passwordInput, password, sizeof(password)) != 0 ||
+        !validatorIsValidPassword(password)) {
+        return BIZ_ERR_INVALID_PASSWORD;
+    }
+
+    cardLoadResult = dataLoadCards();
+    if (cardLoadResult < 0) {
+        return mapDataResult((DataResult)cardLoadResult);
+    }
+
+    card = dataQueryCardByName(cardName);
+    if (card == NULL || card->nDel != 0) {
+        return BIZ_ERR_CARD_NOT_FOUND;
+    }
+    if (strcmp(card->aPwd, password) != 0) {
+        return BIZ_ERR_WRONG_PASSWORD;
+    }
+    if (card->nStatus == CARD_STATUS_CANCELED) {
+        return BIZ_ERR_CARD_CANCELED_FOR_REFUND;
+    }
+    if (!isRefundAllowedStatus(card->nStatus)) {
+        return BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND;
+    }
+    if (card->nBalanceCent <= 0) {
+        return BIZ_ERR_BALANCE_NOT_ENOUGH;
+    }
+
+    refundAmountCent = card->nBalanceCent;
+    originalCard = *card;
+    refundedCard = *card;
+    now = time(NULL);
+    refundedCard.nBalanceCent = 0;
+
+    snprintf(money.aCardName, sizeof(money.aCardName), "%s", refundedCard.aCardName);
+    money.tTime = now;
+    money.nStatus = 1;
+    money.nMoneyCent = refundAmountCent;
+    money.nDel = 0;
+
+    dataResult = dataUpdateCard(&refundedCard);
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
+    }
+
+    dataResult = dataSaveMoney(&money);
+    if (dataResult != DATA_OK) {
+        if (dataUpdateCard(&originalCard) != DATA_OK) {
+            return BIZ_ERR_SYSTEM;
+        }
+        return mapDataResult(dataResult);
+    }
+
+    if (refundRecord != NULL) {
+        *refundRecord = money;
+    }
+    if (updatedCard != NULL) {
+        *updatedCard = refundedCard;
+    }
+
     logOperation("退费");
+    return BIZ_OK;
 }
 
 void bizStatistics(void)

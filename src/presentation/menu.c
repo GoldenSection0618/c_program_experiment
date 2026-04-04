@@ -129,7 +129,7 @@ void dispatchMenuChoice(int choice)
         break;
     case 6:
         printf("你选择了：退费\n");
-        bizRefund();
+        handleRefundInteraction();
         break;
     case 7:
         printf("你选择了：查询统计\n");

@@ -8,6 +8,12 @@
 - `menu_recharge_password_wrong`：密码错误时充值失败，且不污染卡文件和 money 文件
 - `menu_recharge_card_canceled`：已注销卡禁止充值
 - `menu_recharge_amount_invalid`：非法充值金额被拒绝，且不污染卡文件和 money 文件
+- `menu_refund_success`：离线卡退费成功，验证卡余额清零与退费记录追加
+- `menu_refund_card_online`：正在上机卡禁止退费
+- `menu_refund_balance_zero`：余额为 0 的卡禁止退费
+- `menu_refund_card_missing`：卡不存在时退费失败，且不污染卡文件和 money 文件
+- `menu_refund_password_wrong`：密码错误时退费失败，且不污染卡文件和 money 文件
+- `menu_refund_card_canceled`：已注销卡禁止退费
 
 ## 2. 运行方式
 ```bash
@@ -18,10 +24,16 @@ make test LAB=exp7 TEST_SUITE=menu_recharge_card_missing
 make test LAB=exp7 TEST_SUITE=menu_recharge_password_wrong
 make test LAB=exp7 TEST_SUITE=menu_recharge_card_canceled
 make test LAB=exp7 TEST_SUITE=menu_recharge_amount_invalid
+make test LAB=exp7 TEST_SUITE=menu_refund_success
+make test LAB=exp7 TEST_SUITE=menu_refund_card_online
+make test LAB=exp7 TEST_SUITE=menu_refund_balance_zero
+make test LAB=exp7 TEST_SUITE=menu_refund_card_missing
+make test LAB=exp7 TEST_SUITE=menu_refund_password_wrong
+make test LAB=exp7 TEST_SUITE=menu_refund_card_canceled
 make test-batch LAB=exp7 TEST_GROUP=acceptance
 ```
 
 ## 3. 当前阶段说明
-- 本阶段已完成 `Money` 数据层与菜单 `5. 充值` 主流程
-- 暂不实现菜单 `6. 退费` 与 `8. 注销卡`
+- 本阶段已完成 `Money` 数据层、菜单 `5. 充值` 和菜单 `6. 退费` 主流程
+- 暂不实现菜单 `8. 注销卡`
 - 记录文件固定为 `data/money.txt`

@@ -48,6 +48,23 @@ static const char *getRechargeMessage(BizResult result)
     }
 }
 
+static const char *getRefundMessage(BizResult result)
+{
+    switch (result) {
+    case BIZ_ERR_CARD_NOT_FOUND:
+    case BIZ_ERR_WRONG_PASSWORD:
+        return "卡号或密码错误！";
+    case BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND:
+        return "该卡正在上机，不能退费！";
+    case BIZ_ERR_CARD_CANCELED_FOR_REFUND:
+        return "已注销卡不能退费！";
+    case BIZ_ERR_BALANCE_NOT_ENOUGH:
+        return "余额不足，不能退费！";
+    default:
+        return bizGetMessage(result);
+    }
+}
+
 void handleAddCardInteraction(void)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -240,4 +257,33 @@ void handleRechargeInteraction(void)
 
     printf("充值成功！\n");
     viewShowRechargeInfo(&updatedCard, rechargeRecord.nMoneyCent);
+}
+
+void handleRefundInteraction(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    Money refundRecord;
+    Card updatedCard;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    if (readTextInput("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_PASSWORD));
+        return;
+    }
+
+    result = bizRefund(cardName, password, &refundRecord, &updatedCard);
+    if (result != BIZ_OK) {
+        printf("退费失败！\n");
+        printf("%s\n", getRefundMessage(result));
+        return;
+    }
+
+    printf("退费成功！\n");
+    viewShowRefundInfo(&updatedCard, refundRecord.nMoneyCent);
 }

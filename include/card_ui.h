@@ -6,5 +6,6 @@ void handleQueryCardInteraction(void);
 void handleStartBillingInteraction(void);
 void handleStopBillingInteraction(void);
 void handleRechargeInteraction(void);
+void handleRefundInteraction(void);
 
 #endif
