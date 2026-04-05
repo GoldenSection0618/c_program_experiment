@@ -133,7 +133,7 @@ void dispatchMenuChoice(int choice)
         break;
     case 7:
         printf("你选择了：查询统计\n");
-        bizStatistics();
+        handleBillingQueryInteraction();
         break;
     case 8:
         printf("你选择了：注销卡\n");

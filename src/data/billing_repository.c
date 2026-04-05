@@ -1,5 +1,6 @@
 #include "billing_repository.h"
 #include "billing_storage.h"
+#include "billing_storage_file.h"
 #include "common.h"
 
 #include <errno.h>
@@ -24,6 +25,15 @@ static DataResult parseBilling(const char *line, Billing *outBilling);
 static DataResult rewriteBillingFile(void);
 static int isBillingCardNameEqual(const char *a, const char *b);
 static BillingNode *findBillingNodeByCardNameAndStart(const char *cardName, time_t tStart);
+static int billingMatchesCardName(const Billing *billing, const char *cardName);
+static int billingMatchesRange(const Billing *billing, time_t startTime, time_t endTime);
+static size_t countMatchedBillings(const char *cardName, int useRange, time_t startTime, time_t endTime);
+static size_t copyMatchedBillings(const char *cardName,
+                                  int useRange,
+                                  time_t startTime,
+                                  time_t endTime,
+                                  Billing *records,
+                                  size_t capacity);
 
 static void trimLineEnding(char *text)
 {
@@ -276,6 +286,62 @@ static BillingNode *findBillingNodeByCardNameAndStart(const char *cardName, time
     return NULL;
 }
 
+static int billingMatchesCardName(const Billing *billing, const char *cardName)
+{
+    if (billing == NULL || cardName == NULL || *cardName == '\0') {
+        return 0;
+    }
+
+    return billing->nDel == 0 && isBillingCardNameEqual(billing->aCardName, cardName);
+}
+
+static int billingMatchesRange(const Billing *billing, time_t startTime, time_t endTime)
+{
+    if (billing == NULL) {
+        return 0;
+    }
+
+    return billing->tStart >= startTime && billing->tStart <= endTime;
+}
+
+static size_t countMatchedBillings(const char *cardName, int useRange, time_t startTime, time_t endTime)
+{
+    BillingNode *pCurrent = g_pBillingListHead;
+    size_t count = 0;
+
+    while (pCurrent != NULL) {
+        if (billingMatchesCardName(&pCurrent->billingData, cardName) &&
+            (!useRange || billingMatchesRange(&pCurrent->billingData, startTime, endTime))) {
+            count++;
+        }
+        pCurrent = pCurrent->pNext;
+    }
+
+    return count;
+}
+
+static size_t copyMatchedBillings(const char *cardName,
+                                  int useRange,
+                                  time_t startTime,
+                                  time_t endTime,
+                                  Billing *records,
+                                  size_t capacity)
+{
+    BillingNode *pCurrent = g_pBillingListHead;
+    size_t copied = 0;
+
+    while (pCurrent != NULL && copied < capacity) {
+        if (billingMatchesCardName(&pCurrent->billingData, cardName) &&
+            (!useRange || billingMatchesRange(&pCurrent->billingData, startTime, endTime))) {
+            records[copied] = pCurrent->billingData;
+            copied++;
+        }
+        pCurrent = pCurrent->pNext;
+    }
+
+    return copied;
+}
+
 int dataAddBilling(const Billing *billing)
 {
     BillingNode *pNewNode = NULL;
@@ -328,6 +394,91 @@ const Billing *dataQueryLatestUnsettledBillingByCardName(const char *cardName)
     }
 
     return pMatched;
+}
+
+DataResult dataQueryBillingsByCardName(const char *cardName, Billing **records, size_t *count)
+{
+    int loadResult = 0;
+    size_t matchedCount = 0;
+    Billing *buffer = NULL;
+
+    if (cardName == NULL || *cardName == '\0' || records == NULL || count == NULL) {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    *records = NULL;
+    *count = 0;
+
+    loadResult = dataLoadBillings();
+    if (loadResult < 0) {
+        return (DataResult)loadResult;
+    }
+
+    matchedCount = countMatchedBillings(cardName, 0, (time_t)0, (time_t)0);
+    if (matchedCount == 0) {
+        return DATA_ERR_NOT_FOUND;
+    }
+
+    buffer = (Billing *)malloc(matchedCount * sizeof(Billing));
+    if (buffer == NULL) {
+        return DATA_ERR_NO_MEMORY;
+    }
+
+    if (copyMatchedBillings(cardName, 0, (time_t)0, (time_t)0, buffer, matchedCount) != matchedCount) {
+        free(buffer);
+        return DATA_ERR_FILE_OPEN;
+    }
+
+    *records = buffer;
+    *count = matchedCount;
+    return DATA_OK;
+}
+
+DataResult dataQueryBillingsByCardNameAndRange(const char *cardName,
+                                               time_t startTime,
+                                               time_t endTime,
+                                               Billing **records,
+                                               size_t *count)
+{
+    int loadResult = 0;
+    size_t matchedCount = 0;
+    Billing *buffer = NULL;
+
+    if (cardName == NULL || *cardName == '\0' || records == NULL || count == NULL || startTime > endTime) {
+        return DATA_ERR_INVALID_ARG;
+    }
+
+    *records = NULL;
+    *count = 0;
+
+    loadResult = dataLoadBillings();
+    if (loadResult < 0) {
+        return (DataResult)loadResult;
+    }
+
+    matchedCount = countMatchedBillings(cardName, 1, startTime, endTime);
+    if (matchedCount == 0) {
+        return DATA_ERR_NOT_FOUND;
+    }
+
+    buffer = (Billing *)malloc(matchedCount * sizeof(Billing));
+    if (buffer == NULL) {
+        return DATA_ERR_NO_MEMORY;
+    }
+
+    if (copyMatchedBillings(cardName, 1, startTime, endTime, buffer, matchedCount) != matchedCount) {
+        free(buffer);
+        return DATA_ERR_FILE_OPEN;
+    }
+
+    *records = buffer;
+    *count = matchedCount;
+    return DATA_OK;
+}
+
+void dataFreeQueriedBillings(Billing *records)
+{
+    free(records);
 }
 
 void dataCleanupBillings(void)

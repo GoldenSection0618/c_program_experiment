@@ -65,6 +65,11 @@ static const char *getRefundMessage(BizResult result)
     }
 }
 
+static const char *getBillingQueryMessage(BizResult result)
+{
+    return bizGetMessage(result);
+}
+
 void handleAddCardInteraction(void)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -286,4 +291,68 @@ void handleRefundInteraction(void)
 
     printf("退费成功！\n");
     viewShowRefundInfo(&updatedCard, refundRecord.nMoneyCent);
+}
+
+void handleBillingQueryInteraction(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char startText[INPUT_BUF_SIZE];
+    char endText[INPUT_BUF_SIZE];
+    BillingQueryResult resultSet;
+    int featureChoice = 0;
+    int queryMode = 0;
+    BizResult result = BIZ_OK;
+
+    resultSet.items = NULL;
+    resultSet.count = 0;
+
+    printf("1. 按卡号查询消费记录\n");
+    if (readChoiceInput("请选择统计功能：", &featureChoice) != 0) {
+        printf("统计功能输入格式错误，请输入数字编号（1）。\n");
+        return;
+    }
+    if (featureChoice != 1) {
+        printf("无效统计功能编号，请输入 1。\n");
+        return;
+    }
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    printf("1. 查询全部\n");
+    printf("2. 限定时间段\n");
+    if (readChoiceInput("请选择查询方式：", &queryMode) != 0) {
+        printf("查询方式输入格式错误，请输入数字编号（1~2）。\n");
+        return;
+    }
+
+    switch (queryMode) {
+    case 1:
+        result = bizQueryBillingsByCardName(cardName, &resultSet);
+        break;
+    case 2:
+        if (readTextInput("请输入开始时间（YYYY-MM-DD HH:MM:SS）：", startText, sizeof(startText)) != 0) {
+            printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_TIME_RANGE));
+            return;
+        }
+        if (readTextInput("请输入结束时间（YYYY-MM-DD HH:MM:SS）：", endText, sizeof(endText)) != 0) {
+            printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_TIME_RANGE));
+            return;
+        }
+        result = bizQueryBillingsByCardNameAndRange(cardName, startText, endText, &resultSet);
+        break;
+    default:
+        printf("无效查询方式，请输入 1~2。\n");
+        return;
+    }
+
+    if (result != BIZ_OK) {
+        printf("%s\n", getBillingQueryMessage(result));
+        return;
+    }
+
+    viewShowBillingRecords(resultSet.items, resultSet.count);
+    bizFreeBillingQueryResult(&resultSet);
 }

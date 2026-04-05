@@ -20,6 +20,18 @@ static const char *cardStatusToText(int status)
     }
 }
 
+static const char *billingStatusToText(int status)
+{
+    switch (status) {
+    case 0:
+        return "未结算";
+    case 1:
+        return "已结算";
+    default:
+        return "未知";
+    }
+}
+
 static void formatMoneyFromCent(int32_t amountCent, char *buffer, size_t size);
 
 static void formatTimeString(time_t ts, char *buffer, size_t size)
@@ -562,5 +574,78 @@ void viewShowRefundInfo(const Card *card, int32_t refundAmountCent)
     printCellRule(cardColWidth + 2);
     printCellRule(amountColWidth + 2);
     printCellRule(balanceColWidth + 2);
+    printf("+\n");
+}
+
+void viewShowBillingRecords(const Billing *items, size_t count)
+{
+    const int cardColWidth = 18;
+    const int startTimeColWidth = 19;
+    const int endTimeColWidth = 19;
+    const int amountColWidth = 10;
+    const int statusColWidth = 8;
+    size_t index = 0;
+
+    if (items == NULL || count == 0) {
+        return;
+    }
+
+    printf("查询结果：\n");
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(statusColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("上机时间", startTimeColWidth);
+    printf(" | ");
+    printCellLeftUtf8("下机时间", endTimeColWidth);
+    printf(" | ");
+    printCellLeftUtf8("消费金额", amountColWidth);
+    printf(" | ");
+    printCellLeftUtf8("结算状态", statusColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(statusColWidth + 2);
+    printf("+\n");
+
+    for (index = 0; index < count; index++) {
+        char startTimeBuf[32];
+        char endTimeBuf[32];
+        char amountBuf[32];
+
+        formatTimeString(items[index].tStart, startTimeBuf, sizeof(startTimeBuf));
+        formatTimeString(items[index].tEnd, endTimeBuf, sizeof(endTimeBuf));
+        if (items[index].tEnd == (time_t)0) {
+            snprintf(endTimeBuf, sizeof(endTimeBuf), "--");
+        }
+        formatMoneyFromCent(items[index].nAmountCent, amountBuf, sizeof(amountBuf));
+
+        printf("| ");
+        printCellLeftUtf8(items[index].aCardName, cardColWidth);
+        printf(" | ");
+        printCellLeftUtf8(startTimeBuf, startTimeColWidth);
+        printf(" | ");
+        printCellLeftUtf8(endTimeBuf, endTimeColWidth);
+        printf(" | ");
+        printCellRightAscii(amountBuf, amountColWidth);
+        printf(" | ");
+        printCellLeftUtf8(billingStatusToText(items[index].nStatus), statusColWidth);
+        printf(" |\n");
+    }
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(startTimeColWidth + 2);
+    printCellRule(endTimeColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printCellRule(statusColWidth + 2);
     printf("+\n");
 }

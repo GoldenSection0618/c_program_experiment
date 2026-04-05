@@ -14,6 +14,11 @@
 - `menu_refund_card_missing`：卡不存在时退费失败，且不污染卡文件和 money 文件
 - `menu_refund_password_wrong`：密码错误时退费失败，且不污染卡文件和 money 文件
 - `menu_refund_card_canceled`：已注销卡禁止退费
+- `menu_query_billings_all_found`：按卡号查询全部消费记录成功
+- `menu_query_billings_all_missing`：按卡号查询消费记录无结果
+- `menu_query_billings_range_found`：按卡号和时间段查询消费记录成功
+- `menu_query_billings_range_missing`：时间段有效但无命中记录
+- `menu_query_billings_range_invalid`：时间范围非法时查询失败
 
 ## 2. 运行方式
 ```bash
@@ -30,10 +35,16 @@ make test LAB=exp7 TEST_SUITE=menu_refund_balance_zero
 make test LAB=exp7 TEST_SUITE=menu_refund_card_missing
 make test LAB=exp7 TEST_SUITE=menu_refund_password_wrong
 make test LAB=exp7 TEST_SUITE=menu_refund_card_canceled
+make test LAB=exp7 TEST_SUITE=menu_query_billings_all_found
+make test LAB=exp7 TEST_SUITE=menu_query_billings_all_missing
+make test LAB=exp7 TEST_SUITE=menu_query_billings_range_found
+make test LAB=exp7 TEST_SUITE=menu_query_billings_range_missing
+make test LAB=exp7 TEST_SUITE=menu_query_billings_range_invalid
 make test-batch LAB=exp7 TEST_GROUP=acceptance
 ```
 
 ## 3. 当前阶段说明
 - 本阶段已完成 `Money` 数据层、菜单 `5. 充值` 和菜单 `6. 退费` 主流程
+- 已新增菜单 `7` 下的“按卡号查询消费记录”扩展，支持查询全部和限定时间段
 - 暂不实现菜单 `8. 注销卡`
 - 记录文件固定为 `data/money.txt`

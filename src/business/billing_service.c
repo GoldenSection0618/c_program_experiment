@@ -1,4 +1,5 @@
 #include "business.h"
+#include "billing_query_repository.h"
 #include "billing_repository.h"
 #include "billing_rule.h"
 #include "billing_storage_file.h"
@@ -8,6 +9,7 @@
 #include "common.h"
 #include "money_storage_file.h"
 #include "operation_log.h"
+#include "time_validator.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -250,6 +252,10 @@ const char *bizGetMessage(BizResult result)
         return "已注销卡不能退费！";
     case BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND:
         return "该卡正在上机，不能退费！";
+    case BIZ_ERR_INVALID_TIME_RANGE:
+        return "时间范围输入不合法！";
+    case BIZ_ERR_BILLING_RECORD_NOT_FOUND:
+        return "没有找到符合条件的消费记录！";
     case BIZ_ERR_FILE_OPEN:
         return "数据文件异常：卡信息文件打开失败。";
     case BIZ_ERR_FILE_NOT_FOUND:
@@ -651,6 +657,86 @@ BizResult bizRefund(const char *cardNameInput,
 
     logOperation("退费");
     return BIZ_OK;
+}
+
+BizResult bizQueryBillingsByCardName(const char *cardNameInput, BillingQueryResult *result)
+{
+    char cardName[INPUT_BUF_SIZE];
+    DataResult dataResult = DATA_OK;
+
+    if (result == NULL) {
+        return BIZ_ERR_SYSTEM;
+    }
+
+    result->items = NULL;
+    result->count = 0;
+
+    if (validatorNormalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 ||
+        !validatorIsValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    dataResult = dataQueryBillingsByCardName(cardName, &result->items, &result->count);
+    if (dataResult == DATA_ERR_NOT_FOUND || dataResult == DATA_ERR_FILE_NOT_FOUND) {
+        return BIZ_ERR_BILLING_RECORD_NOT_FOUND;
+    }
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
+    }
+
+    logOperation("按卡号查询消费记录");
+    return BIZ_OK;
+}
+
+BizResult bizQueryBillingsByCardNameAndRange(const char *cardNameInput,
+                                             const char *startInput,
+                                             const char *endInput,
+                                             BillingQueryResult *result)
+{
+    char cardName[INPUT_BUF_SIZE];
+    time_t startTime = (time_t)0;
+    time_t endTime = (time_t)0;
+    DataResult dataResult = DATA_OK;
+
+    if (result == NULL) {
+        return BIZ_ERR_SYSTEM;
+    }
+
+    result->items = NULL;
+    result->count = 0;
+
+    if (validatorNormalizeInput(cardNameInput, cardName, sizeof(cardName)) != 0 ||
+        !validatorIsValidCardName(cardName)) {
+        return BIZ_ERR_INVALID_CARD_NAME;
+    }
+
+    if (timeValidatorParseDateTime(startInput, &startTime) != 0 ||
+        timeValidatorParseDateTime(endInput, &endTime) != 0 ||
+        startTime > endTime) {
+        return BIZ_ERR_INVALID_TIME_RANGE;
+    }
+
+    dataResult = dataQueryBillingsByCardNameAndRange(cardName, startTime, endTime, &result->items, &result->count);
+    if (dataResult == DATA_ERR_NOT_FOUND || dataResult == DATA_ERR_FILE_NOT_FOUND) {
+        return BIZ_ERR_BILLING_RECORD_NOT_FOUND;
+    }
+    if (dataResult != DATA_OK) {
+        return mapDataResult(dataResult);
+    }
+
+    logOperation("按卡号和时间段查询消费记录");
+    return BIZ_OK;
+}
+
+void bizFreeBillingQueryResult(BillingQueryResult *result)
+{
+    if (result == NULL) {
+        return;
+    }
+
+    dataFreeQueriedBillings(result->items);
+    result->items = NULL;
+    result->count = 0;
 }
 
 void bizStatistics(void)
