@@ -137,7 +137,7 @@ void dispatchMenuChoice(int choice)
         break;
     case 8:
         printf("你选择了：注销卡\n");
-        bizCancelCard();
+        handleCancelCardInteraction();
         break;
     case 0:
         printf("系统已退出。\n");

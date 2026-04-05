@@ -70,6 +70,21 @@ static const char *getBillingQueryMessage(BizResult result)
     return bizGetMessage(result);
 }
 
+static const char *getCancelCardMessage(BizResult result)
+{
+    switch (result) {
+    case BIZ_ERR_CARD_NOT_FOUND:
+    case BIZ_ERR_WRONG_PASSWORD:
+        return "卡号或密码错误！";
+    case BIZ_ERR_CARD_STATUS_INVALID_FOR_CANCEL:
+        return "该卡正在上机，不能注销！";
+    case BIZ_ERR_CARD_CANCELED_FOR_CANCEL:
+        return "该卡已注销，不能重复注销！";
+    default:
+        return bizGetMessage(result);
+    }
+}
+
 void handleAddCardInteraction(void)
 {
     char cardName[INPUT_BUF_SIZE];
@@ -291,6 +306,35 @@ void handleRefundInteraction(void)
 
     printf("退费成功！\n");
     viewShowRefundInfo(&updatedCard, refundRecord.nMoneyCent);
+}
+
+void handleCancelCardInteraction(void)
+{
+    char cardName[INPUT_BUF_SIZE];
+    char password[INPUT_BUF_SIZE];
+    Money refundRecord;
+    Card updatedCard;
+    BizResult result = BIZ_OK;
+
+    if (readTextInput("请输入卡号（1~18位）：", cardName, sizeof(cardName)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_CARD_NAME));
+        return;
+    }
+
+    if (readTextInput("请输入密码（1~8位）：", password, sizeof(password)) != 0) {
+        printf("%s\n", bizGetMessage(BIZ_ERR_INVALID_PASSWORD));
+        return;
+    }
+
+    result = bizCancelCard(cardName, password, &refundRecord, &updatedCard);
+    if (result != BIZ_OK) {
+        printf("注销卡失败！\n");
+        printf("%s\n", getCancelCardMessage(result));
+        return;
+    }
+
+    printf("注销卡成功！\n");
+    viewShowCancelCardInfo(&updatedCard, refundRecord.nMoneyCent);
 }
 
 void handleBillingQueryInteraction(void)

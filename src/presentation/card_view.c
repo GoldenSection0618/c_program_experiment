@@ -577,6 +577,43 @@ void viewShowRefundInfo(const Card *card, int32_t refundAmountCent)
     printf("+\n");
 }
 
+void viewShowCancelCardInfo(const Card *card, int32_t refundAmountCent)
+{
+    const int cardColWidth = 18;
+    const int amountColWidth = 10;
+    char amountBuf[32];
+
+    if (card == NULL) {
+        return;
+    }
+
+    formatMoneyFromCent(refundAmountCent, amountBuf, sizeof(amountBuf));
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8("卡号", cardColWidth);
+    printf(" | ");
+    printCellLeftUtf8("退款金额", amountColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printf("+\n");
+
+    printf("| ");
+    printCellLeftUtf8(card->aCardName, cardColWidth);
+    printf(" | ");
+    printCellRightAscii(amountBuf, amountColWidth);
+    printf(" |\n");
+
+    printCellRule(cardColWidth + 2);
+    printCellRule(amountColWidth + 2);
+    printf("+\n");
+}
+
 void viewShowBillingRecords(const Billing *items, size_t count)
 {
     const int cardColWidth = 18;

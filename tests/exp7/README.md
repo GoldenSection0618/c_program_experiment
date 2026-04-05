@@ -14,6 +14,12 @@
 - `menu_refund_card_missing`：卡不存在时退费失败，且不污染卡文件和 money 文件
 - `menu_refund_password_wrong`：密码错误时退费失败，且不污染卡文件和 money 文件
 - `menu_refund_card_canceled`：已注销卡禁止退费
+- `menu_cancel_card_success_with_refund`：离线卡注销成功并退回原余额
+- `menu_cancel_card_success_zero_balance`：零余额离线卡注销成功，且不写 money 记录
+- `menu_cancel_card_online`：正在上机卡禁止注销
+- `menu_cancel_card_already_canceled`：已注销卡禁止重复注销
+- `menu_cancel_card_missing`：卡不存在时注销失败，且不污染卡文件和 money 文件
+- `menu_cancel_card_password_wrong`：密码错误时注销失败，且不污染卡文件和 money 文件
 - `menu_query_billings_all_found`：按卡号查询全部消费记录成功
 - `menu_query_billings_all_missing`：按卡号查询消费记录无结果
 - `menu_query_billings_range_found`：按卡号和时间段查询消费记录成功
@@ -35,6 +41,12 @@ make test LAB=exp7 TEST_SUITE=menu_refund_balance_zero
 make test LAB=exp7 TEST_SUITE=menu_refund_card_missing
 make test LAB=exp7 TEST_SUITE=menu_refund_password_wrong
 make test LAB=exp7 TEST_SUITE=menu_refund_card_canceled
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_success_with_refund
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_success_zero_balance
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_online
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_already_canceled
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_missing
+make test LAB=exp7 TEST_SUITE=menu_cancel_card_password_wrong
 make test LAB=exp7 TEST_SUITE=menu_query_billings_all_found
 make test LAB=exp7 TEST_SUITE=menu_query_billings_all_missing
 make test LAB=exp7 TEST_SUITE=menu_query_billings_range_found
@@ -44,7 +56,6 @@ make test-batch LAB=exp7 TEST_GROUP=acceptance
 ```
 
 ## 3. 当前阶段说明
-- 本阶段已完成 `Money` 数据层、菜单 `5. 充值` 和菜单 `6. 退费` 主流程
+- 本阶段已完成 `Money` 数据层、菜单 `5. 充值`、菜单 `6. 退费` 和菜单 `8. 注销卡` 主流程
 - 已新增菜单 `7` 下的“按卡号查询消费记录”扩展，支持查询全部和限定时间段
-- 暂不实现菜单 `8. 注销卡`
 - 记录文件固定为 `data/money.txt`

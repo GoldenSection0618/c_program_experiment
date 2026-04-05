@@ -31,7 +31,9 @@ typedef enum BizResult {
     BIZ_ERR_CARD_CANCELED_FOR_REFUND = -21,
     BIZ_ERR_CARD_STATUS_INVALID_FOR_REFUND = -22,
     BIZ_ERR_INVALID_TIME_RANGE = -23,
-    BIZ_ERR_BILLING_RECORD_NOT_FOUND = -24
+    BIZ_ERR_BILLING_RECORD_NOT_FOUND = -24,
+    BIZ_ERR_CARD_CANCELED_FOR_CANCEL = -25,
+    BIZ_ERR_CARD_STATUS_INVALID_FOR_CANCEL = -26
 } BizResult;
 
 typedef struct BillingQueryResult {
@@ -64,6 +66,10 @@ BizResult bizRefund(const char *cardNameInput,
                     const char *passwordInput,
                     Money *refundRecord,
                     Card *updatedCard);
+BizResult bizCancelCard(const char *cardNameInput,
+                        const char *passwordInput,
+                        Money *refundRecord,
+                        Card *updatedCard);
 BizResult bizQueryBillingsByCardName(const char *cardNameInput, BillingQueryResult *result);
 BizResult bizQueryBillingsByCardNameAndRange(const char *cardNameInput,
                                              const char *startInput,
@@ -71,7 +77,6 @@ BizResult bizQueryBillingsByCardNameAndRange(const char *cardNameInput,
                                              BillingQueryResult *result);
 void bizFreeBillingQueryResult(BillingQueryResult *result);
 void bizStatistics(void);
-void bizCancelCard(void);
 void bizShutdown(void);
 
 #endif
