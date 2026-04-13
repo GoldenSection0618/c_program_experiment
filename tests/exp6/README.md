@@ -5,7 +5,7 @@
 - `menu_start_billing_success`：实验六上机成功验证，覆盖菜单 3、卡状态更新、未结算消费记录追加与结果展示
 - `menu_start_billing_card_missing`：实验六上机失败验证，覆盖卡不存在场景
 - `menu_start_billing_password_wrong`：实验六上机失败验证，覆盖密码错误场景
-- `menu_start_billing_card_unavailable`：实验六上机失败验证，覆盖卡正在上机或已注销场景
+- `menu_start_billing_card_unavailable`：实验六上机失败验证，覆盖卡正在上机场景
 - `menu_start_billing_card_canceled`：实验六上机失败验证，覆盖卡已注销场景
 - `menu_start_billing_balance_not_enough`：实验六上机失败验证，覆盖余额不足场景
 - `menu_start_billing_card_file_empty`：实验六上机失败验证，覆盖卡文件为空场景

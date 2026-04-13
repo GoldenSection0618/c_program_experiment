@@ -16,7 +16,9 @@ static const char *getStartBillingMessage(BizResult result)
     case BIZ_ERR_WRONG_PASSWORD:
         return "卡号或密码错误！";
     case BIZ_ERR_CARD_UNAVAILABLE:
-        return "该卡正在使用或已注销！";
+        return "该卡正在使用！";
+    case BIZ_ERR_CARD_CANCELED_FOR_START:
+        return "该卡已注销！";
     case BIZ_ERR_BALANCE_NOT_ENOUGH:
         return "余额不足！";
     default:

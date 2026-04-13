@@ -229,7 +229,9 @@ const char *bizGetMessage(BizResult result)
     case BIZ_ERR_WRONG_PASSWORD:
         return "密码错误！";
     case BIZ_ERR_CARD_UNAVAILABLE:
-        return "该卡正在使用或已注销，不能上机！";
+        return "该卡正在使用，不能上机！";
+    case BIZ_ERR_CARD_CANCELED_FOR_START:
+        return "该卡已注销，不能上机！";
     case BIZ_ERR_BALANCE_NOT_ENOUGH:
         return "余额不足，不能上机！";
     case BIZ_ERR_NO_UNSETTLED_BILLING:
@@ -296,6 +298,9 @@ BizResult bizStartBilling(const char *cardNameInput,
     }
     if (strcmp(card->aPwd, password) != 0) {
         return BIZ_ERR_WRONG_PASSWORD;
+    }
+    if (card->nStatus == CARD_STATUS_CANCELED) {
+        return BIZ_ERR_CARD_CANCELED_FOR_START;
     }
     if (!isStartBillingAllowedStatus(card->nStatus)) {
         return BIZ_ERR_CARD_UNAVAILABLE;
